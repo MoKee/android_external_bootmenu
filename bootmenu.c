@@ -76,7 +76,7 @@ static float progress_value = 0.0;
 char** prepend_title(const char** headers) {
 
   char* title[] = {
-      "Android Bootmenu v" EXPAND(BOOTMENU_VERSION),
+      "Android Bootmenu v" BOOTMENU_VERSION,
       "",
       NULL
   };
