@@ -1,7 +1,6 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <fcntl.h>
 #include <linux/spi/cpcap.h>
 
@@ -9,11 +8,6 @@
 
 static int cpcap_fd = -1;
 static struct cpcap_adc_us_request req_us;
-
-#define FMT_HEX "0x%04x"
-#define FMT_DEC "%5d"
-
-#define FMT_PRINTF " %d: " FMT_DEC
 
 /**
  * bank   int : enum cpcap_adc_type
@@ -48,10 +42,9 @@ int read_bank(int bank, int format) {
 
 /**
  * Read battery voltage, and convert to percentage
- * Its not really exact percents, but give an idea on battery level.
+ * Its not really the exact value, but give an idea on battery level.
  *
  */
-
 int cpcap_batt_percent(void) {
 
     int ret, percent, volt_batt, volt_vbus;
@@ -78,7 +71,7 @@ int cpcap_batt_percent(void) {
     }
 */
 
-    // minimal voltage value, max ~= 4100
+    // Minimal voltage value, max ~= 4100
     // under 3.5V, battery is almost empty
     mini  = 3500.0; 
     range = (4050.0 - mini) / 100.0;

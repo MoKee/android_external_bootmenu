@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/reboot.h>
-//#include <sys/wait.h>
 #include <time.h>
 
 #include <unistd.h>
@@ -69,11 +68,15 @@ static float progress_value = 0.0;
 /**
  * prepend_title()
  *
+ * Add fixed bootmenu header before menu items
+ *
+ * Note: Hard to tweak, should maybe be recoded
+ *       without malloc..
  */
 char** prepend_title(const char** headers) {
 
   char* title[] = {
-      "Android Bootmenu v" EXPAND(BOOTMENU_VERSION) "        ",
+      "Android Bootmenu v" EXPAND(BOOTMENU_VERSION),
       "",
       NULL
   };
@@ -87,7 +90,6 @@ char** prepend_title(const char** headers) {
 
   char** new_headers = malloc((count+1) * sizeof(char*));
   char** h = new_headers;
-
   for (p = title; *p; ++p, ++h) *h = *p;
   for (p = (char**) headers; *p; ++p, ++h) *h = *p;
   *h = NULL;
@@ -123,13 +125,9 @@ int get_menu_selection(char** headers, char** items, int menu_only,
 #ifdef BOARD_WITH_CPCAP
     int level = battery_level();
     if (level > 0) {
-
-      //char battp[48];
-      //sprintf(battp, "Batt: %3f %%", level);
-
       if ((50 * progress_value) != level / 2) {
           progress_value = level / 100.0;
-          if (level < 30)
+          if (level < 20)
              ui_print("Low battery ! %3d %%\n", level);
           ui_reset_progress();
           ui_show_progress(progress_value, 1);
@@ -359,11 +357,12 @@ static int run_bootmenu(void) {
         ui_set_background(BACKGROUND_DEFAULT);
         ui_show_text(ENABLE);
         led_alert("button-backlight", ENABLE);
+
         LOGI("Start Android BootMenu....\n");
 
         main_headers = prepend_title((const char**)MENU_HEADERS);
 
-        /* can be buggy
+        /* can be buggy, adb could lock filesystem
         if (!adb_started && usb_connected()) {
             ui_print("Usb connected, starting adb...\n\n");
             exec_script(FILE_ADBD, DISABLE);
