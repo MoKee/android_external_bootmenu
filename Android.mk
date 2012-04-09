@@ -53,8 +53,7 @@ endif
 
 # Special flag for unlocked devices (do not override libreboot for recovery)
 ifeq ($(TARGET_BOOTLOADER_BOARD_NAME),olympus)
-    EXTRA_CFLAGS += -DUNLOCKED_DEVICE -DBOARD_MMC_DEVICE="\"/dev/block/mmcblk0\"" \
-                    -DNO_OVERCLOCK -DBOARD_WITH_CPCAP
+    EXTRA_CFLAGS += -DUNLOCKED_DEVICE -DNO_OVERCLOCK
 endif
 
 ######################################
