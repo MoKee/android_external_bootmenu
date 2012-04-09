@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <linux/spi/cpcap.h>
 
+#include "common.h"
 #include "batt_cpcap.h"
 
 static int cpcap_fd = -1;
@@ -22,7 +23,7 @@ static struct cpcap_adc_us_request req_us;
  *        CPCAP_ADC_FORMAT_PHASED
  *        CPCAP_ADC_FORMAT_CONVERTED
  */
-int read_bank(int bank, int format) {
+static int read_bank(int bank, int format) {
 
     int ret;
 
@@ -34,7 +35,7 @@ int read_bank(int bank, int format) {
 
     ret = ioctl(cpcap_fd, CPCAP_IOCTL_BATT_ATOD_SYNC, &req_us);
     if (ret != 0) {
-        fprintf(stderr, "ioctl failed, ret=%d errno=%d", ret, errno);
+        LOGE("ioctl failed, ret=%d errno=%d", ret, errno);
     }
     return ret;
 }
@@ -47,7 +48,7 @@ int read_bank(int bank, int format) {
  */
 int cpcap_batt_percent(void) {
 
-    int ret, percent, volt_batt, volt_vbus;
+    int ret, percent, volt_batt;
     float range, mini;
 
     cpcap_fd = open("/dev/cpcap_batt", O_RDONLY | O_NONBLOCK);
@@ -62,9 +63,9 @@ int cpcap_batt_percent(void) {
     }
 
     volt_batt = req_us.result[CPCAP_ADC_BATTP];
-    volt_vbus = req_us.result[CPCAP_ADC_VBUS];
-
 /*
+    int volt_vbus = req_us.result[CPCAP_ADC_VBUS];
+
     if (volt_vbus > 4400 && volt_vbus < 5200) {
         // usb powered
         volt_batt -= 100;
@@ -73,14 +74,13 @@ int cpcap_batt_percent(void) {
 
     // Minimal voltage value, max ~= 4100
     // under 3.5V, battery is almost empty
-    mini  = 3500.0; 
+    mini  = 3500.0;
     range = (4050.0 - mini) / 100.0;
 
     percent = (volt_batt - mini) / range;
-    if (percent > 100)
-        percent = 100;
-    if (percent < 0)
-        percent = 0;
+    if (percent > 100) percent = 100;
+    if (percent < 0)   percent = 0;
+
 exit:
     close(cpcap_fd);
 

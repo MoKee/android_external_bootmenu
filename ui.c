@@ -37,7 +37,7 @@
 #define CHAR_WIDTH 10
 #define CHAR_HEIGHT 18
 
-#define PROGRESSBAR_INDETERMINATE_STATES 4
+#define PROGRESSBAR_INDETERMINATE_STATES 2
 #define PROGRESSBAR_INDETERMINATE_FPS 15
 
 static pthread_mutex_t gUpdateMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -51,8 +51,6 @@ static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
     { &gBackgroundIcon[BACKGROUND_ALT], "background" },
     { &gProgressBarIndeterminate[0],    "indeterminate1" },
     { &gProgressBarIndeterminate[1],    "indeterminate2" },
-    { &gProgressBarIndeterminate[2],    "indeterminate3" },
-    { &gProgressBarIndeterminate[3],    "indeterminate4" },
     { &gProgressBarEmpty,               "progress_empty" },
     { &gProgressBarFill,                "progress_fill" },
     { NULL,                             NULL },
@@ -79,7 +77,8 @@ static int text_cols = 0, text_rows = 0;
 static int text_col = 0, text_row = 0, text_top = 0;
 static int show_text = 0;
 
-static int show_percent = 1;
+// Progression % used for battery level
+static bool show_percent = true;
 static float percent = 0.0;
 
 static char menu[MAX_ROWS][MAX_COLS];
@@ -531,8 +530,6 @@ int ui_menu_select(int sel) {
     if (show_menu > 0) {
         old_sel = menu_sel;
         menu_sel = sel;
-//        if (menu_sel < 0) menu_sel = 0;
-//        if (menu_sel >= menu_items) menu_sel = menu_items-1;
         if (menu_sel < 0) menu_sel = menu_items + menu_sel;
         if (menu_sel >= menu_items) menu_sel = menu_sel - menu_items;
 
