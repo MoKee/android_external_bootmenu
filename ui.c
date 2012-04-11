@@ -37,20 +37,19 @@
 #define CHAR_WIDTH 10
 #define CHAR_HEIGHT 18
 
-#define PROGRESSBAR_INDETERMINATE_STATES 2
-#define PROGRESSBAR_INDETERMINATE_FPS 15
-
 static pthread_mutex_t gUpdateMutex = PTHREAD_MUTEX_INITIALIZER;
 static gr_surface gBackgroundIcon[NUM_BACKGROUND_ICONS];
 static gr_surface gProgressBarIndeterminate[PROGRESSBAR_INDETERMINATE_STATES];
 static gr_surface gProgressBarEmpty;
 static gr_surface gProgressBarFill;
 
+#define PROGRESSBAR_INDETERMINATE_STATES 1
+#define PROGRESSBAR_INDETERMINATE_FPS 15
+
 static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
     { &gBackgroundIcon[BACKGROUND_DEFAULT], "background" },
     { &gBackgroundIcon[BACKGROUND_ALT], "background" },
     { &gProgressBarIndeterminate[0],    "indeterminate1" },
-    { &gProgressBarIndeterminate[1],    "indeterminate2" },
     { &gProgressBarEmpty,               "progress_empty" },
     { &gProgressBarFill,                "progress_fill" },
     { NULL,                             NULL },
