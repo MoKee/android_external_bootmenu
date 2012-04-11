@@ -39,12 +39,12 @@
 
 static pthread_mutex_t gUpdateMutex = PTHREAD_MUTEX_INITIALIZER;
 static gr_surface gBackgroundIcon[NUM_BACKGROUND_ICONS];
-static gr_surface gProgressBarIndeterminate[PROGRESSBAR_INDETERMINATE_STATES];
 static gr_surface gProgressBarEmpty;
 static gr_surface gProgressBarFill;
 
 #define PROGRESSBAR_INDETERMINATE_STATES 1
 #define PROGRESSBAR_INDETERMINATE_FPS 15
+static gr_surface gProgressBarIndeterminate[PROGRESSBAR_INDETERMINATE_STATES];
 
 static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
     { &gBackgroundIcon[BACKGROUND_DEFAULT], "background" },
