@@ -99,12 +99,7 @@ int exec_script(const char* filename, int ui);
 int real_execute(int r_argc, char** r_argv);
 int file_exists(char * file);
 
-/* dirty hack for dule core cpus
- * in dual core cpus, sometimes the hijack not work, 
- * we should reboot phone to re-start the hijack and the 2nd method
-*/
 int snd_exec_script(const char* filename, int ui);
-int snd_reboot();
 
 int set_usb_device_mode(const char *mode);
 int mount_usb_storage(const char *part);

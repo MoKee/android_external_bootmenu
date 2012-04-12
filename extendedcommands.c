@@ -979,14 +979,19 @@ int exec_script(const char* filename, int ui) {
   return 0;
 }
 
-int snd_reboot(){
+inline int snd_reboot() {
   sync();
   return reboot(RB_AUTOBOOT);
 }
+
 /**
  * snd_exec_script()
- * dirty hack for dual core cpus in snd_method
  *
+ * dirty hack for dual core cpus
+ * sometimes 2nd-init doesnt work, when task is not executed on same core
+ * (for more infos search for ptrace() problems related to cpu affinity)
+ *
+ * We need to reboot phone to retry because the phone is not in a proper state
  */
 int snd_exec_script(const char* filename, int ui) {
   int status;

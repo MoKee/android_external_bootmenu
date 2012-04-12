@@ -16,7 +16,7 @@ bootmenu_sources := \
     default_bootmenu_ui.c \
     ui.c \
 
-BOOTMENU_VERSION:=1.1.9
+BOOTMENU_VERSION:=1.2.0
 
 # Variables available in BoardConfig.mk related to mount devices
 
@@ -25,7 +25,7 @@ ifeq ($(BOARD_WITH_CPCAP),true)
     EXTRA_CFLAGS += -DBOARD_WITH_CPCAP
 endif
 
-ifeq ($(BOOTMENU_USE_DUALCORE_2ND_DIRTY_HACK),true)
+ifeq ($(TARGET_CPU_SMP),true)
     EXTRA_CFLAGS += -DUSE_DUALCORE_DIRTY_HACK
 endif
 ifneq ($(BOARD_DATA_DEVICE),)
