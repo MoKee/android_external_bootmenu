@@ -588,7 +588,13 @@ int snd_init(int ui) {
   else
     LOGI("Start " LABEL_2NDINIT " boot....\n");
 
-  status = exec_script(FILE_2NDINIT, ui);
+#ifdef USE_DUALCORE_DIRTY_HACK
+    if(!ui)
+      status = snd_exec_script(FILE_2NDINIT, ui);
+    else
+#endif
+      status = exec_script(FILE_2NDINIT, ui);
+
   if (status) {
     return -1;
     bypass_sign("no");
@@ -626,8 +632,14 @@ int snd_boot(int ui) {
     ui_print("Start " LABEL_2NDBOOT " boot....\n");
   else
     LOGI("Start " LABEL_2NDBOOT " boot....\n");
-
-  status = exec_script(FILE_2NDBOOT, ui);
+  
+#ifdef USE_DUALCORE_DIRTY_HACK
+    if(!ui)
+      status = snd_exec_script(FILE_2NDBOOT, ui);
+    else
+#endif
+      status = exec_script(FILE_2NDBOOT, ui);
+  
   if (status) {
     bypass_sign("no");
     return -1;
@@ -666,7 +678,13 @@ int snd_system(int ui) {
   else
     LOGI("Start " LABEL_2NDSYSTEM " boot....\n");
 
-  status = exec_script(FILE_2NDSYSTEM, ui);
+#ifdef USE_DUALCORE_DIRTY_HACK
+    if(!ui)
+      status = snd_exec_script(FILE_2NDSYSTEM, ui);
+    else
+#endif
+      status = exec_script(FILE_2NDSYSTEM, ui);
+  
   if (status) {
     bypass_sign("no");
     return -1;
@@ -956,6 +974,49 @@ int exec_script(const char* filename, int ui) {
       LOGI("E:Error in %s\n(Result: %s)\n", filename, strerror(errno));
     }
     return -1;
+  }
+
+  return 0;
+}
+
+int snd_reboot(){
+  sync();
+  return reboot(RB_AUTOBOOT);
+}
+/**
+ * snd_exec_script()
+ * dirty hack for dual core cpus in snd_method
+ *
+ */
+int snd_exec_script(const char* filename, int ui) {
+  int status;
+  char** args;
+
+  if (!file_exists((char*) filename)) {
+    LOGE("Script not found :\n%s\n", filename);
+    return snd_reboot();
+  }
+
+  LOGI("exec %s\n", filename);
+
+  chmod(filename, 0755);
+
+  args = malloc(sizeof(char*) * 2);
+  args[0] = (char *) filename;
+  args[1] = NULL;
+
+  status = exec_and_wait(args);
+
+  free(args);
+
+  if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+    if (ui) {
+      LOGE("Error in %s\n(Result: %s)\nWill auto restart now\n", filename, strerror(errno));
+    }
+    else {
+      LOGI("E:Error in %s\n(Result: %s)\nWill auto restart now\n", filename, strerror(errno));
+    }
+    return snd_reboot();
   }
 
   return 0;
