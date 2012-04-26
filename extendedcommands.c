@@ -112,7 +112,7 @@ int show_menu_boot(void) {
   };
   char** title_headers = prepend_title(headers);
 
-  char* items[(MODES_COUNT - 3 + 6)] = {
+  /*char* items[(MODES_COUNT - 3 + 6)] = {
         "  +Set Default: [" LABEL_2NDINIT "] -->",
         "  [" LABEL_2NDINIT "]",
         "  [" LABEL_2NDBOOT "]",
@@ -129,46 +129,66 @@ int show_menu_boot(void) {
 #endif
         "  --Go Back.",
         NULL
+  };*/
+  
+  struct UiMenuItem items[(MODES_COUNT - 3 + 6)] = {
+    {MENUITEM_SMALL, "Set Default: [" LABEL_2NDINIT "]", NULL},
+    {MENUITEM_SMALL, LABEL_2NDINIT, NULL},
+    {MENUITEM_SMALL, LABEL_2NDBOOT, NULL},
+    {MENUITEM_SMALL, LABEL_2NDSYSTEM, NULL},
+    {MENUITEM_SMALL, LABEL_NORMAL, NULL},
+    
+    {MENUITEM_SMALL, LABEL_TOGGLE_ADB, NULL},
+    
+#ifdef DEBUG_ALLOC
+    {MENUITEM_SMALL, "test fb", NULL},
+    {MENUITEM_SMALL, "test evt", NULL},
+    {MENUITEM_SMALL, "test png", NULL},
+    {MENUITEM_SMALL, "test all", NULL},
+#endif
+    {MENUITEM_SMALL, "<--Go Back", NULL},
+    {MENUITEM_NULL, NULL, NULL},
   };
 
   char opt_def[64];
   char opt_adb[32];
-  int chosen_item, bootmode;
+  struct UiMenuResult ret;
+  int bootmode;
 
   for (;;) {
     bootmode = get_default_bootmode();
 
-    sprintf(opt_def, "  +Set Default: [%s] -->", str_mode(bootmode) );
-    items[0] = opt_def;
+    sprintf(opt_def, "Set Default: [%s]", str_mode(bootmode) );
+    items[0].title = opt_def;
 
     //Hide unavailables modes
     if (!file_exists((char*) FILE_STOCK)) {
-        items[BOOT_NORMAL] = "";
+        items[BOOT_NORMAL].title = "";
     }
     if (!file_exists((char*) FILE_2NDSYSTEM)) {
-        items[BOOT_2NDSYSTEM] = "";
+        items[BOOT_2NDSYSTEM].title = "";
     }
 
     //ADB Toggle
-    sprintf(opt_adb, "  " LABEL_TOGGLE_ADB " %s", boot_with_adb?"active":"disabled");
-    items[TOGGLE_ADB] = opt_adb;
+    sprintf(opt_adb, LABEL_TOGGLE_ADB " %s", boot_with_adb?"active":"disabled");
+    items[TOGGLE_ADB].title = opt_adb;
 
-    chosen_item = get_menu_selection(title_headers, items, 1, 0);
+    ret = get_menu_selection(title_headers, TABS, items, 1, 0);
 
-    if (chosen_item == GO_BACK) {
+    if (ret.result == GO_BACK) {
         goto exit_loop;
     }
 
     //Submenu: select default mode
-    if (chosen_item == 0) {
+    if (ret.result == 0) {
         show_config_bootmode();
         continue;
     }
 
     //Next boot mode (after reboot, no more required)
     /*
-    else if (chosen_item < BOOT_NORMAL) {
-        if (next_bootmode_write( str_mode(chosen_item) ) != 0) {
+    else if (ret.result < BOOT_NORMAL) {
+        if (next_bootmode_write( str_mode(ret.result) ) != 0) {
             //write error
             continue;
         }
@@ -178,21 +198,21 @@ int show_menu_boot(void) {
     }*/
 
     //Direct boot modes
-    else if (chosen_item == BOOT_2NDINIT) {
+    else if (ret.result == BOOT_2NDINIT) {
         if (boot_with_adb && usb_connected() && !adb_started())
             exec_script(FILE_ADBD, ENABLE);
         status = snd_init(ENABLE);
         res = (status == 0);
         goto exit_loop;
     }
-    else if (chosen_item == BOOT_2NDBOOT) {
+    else if (ret.result == BOOT_2NDBOOT) {
         if (boot_with_adb && usb_connected() && !adb_started())
             exec_script(FILE_ADBD, ENABLE);
         status = snd_boot(ENABLE);
         res = (status == 0);
         goto exit_loop;
     }
-    else if (chosen_item == BOOT_2NDSYSTEM) {
+    else if (ret.result == BOOT_2NDSYSTEM) {
         if (!file_exists((char*) FILE_2NDSYSTEM)) {
             LOGE("Script not found :\n%s\n", FILE_2NDSYSTEM);
             continue;
@@ -203,19 +223,19 @@ int show_menu_boot(void) {
         res = (status == 0);
         goto exit_loop;
     }
-    else if (chosen_item == BOOT_NORMAL) {
+    else if (ret.result == BOOT_NORMAL) {
         if (boot_with_adb && usb_connected() && !adb_started())
             exec_script(FILE_ADBD, ENABLE);
         status = stk_boot(ENABLE);
         res = (status == 0);
         goto exit_loop;
     }
-    else if (chosen_item == TOGGLE_ADB) {
+    else if (ret.result == TOGGLE_ADB) {
         boot_with_adb = (boot_with_adb == 0);
         continue;
     }
     else
-    switch (chosen_item) {
+    switch (ret.result) {
 #ifdef DEBUG_ALLOC
       case BOOT_TEST:
         led_alert("green", 1);
@@ -280,43 +300,44 @@ int show_config_bootmode(void) {
   char** title_headers = prepend_title(headers);
 
   static char options[MODES_COUNT][64];
-  char* menu_opts[MODES_COUNT];
-  int i, mode, chosen_item;
+  struct UiMenuItem menu_opts[MODES_COUNT];
+  int i, mode;
+  struct UiMenuResult ret;
 
   for (;;) {
 
     mode = get_default_bootmode();
 
     for(i = 0; i < LAST_MODE; ++i) {
-      sprintf(options[i], "   [%s]", str_mode(i));
+      sprintf(options[i], " [%s]", str_mode(i));
       if(mode == i)
-        options[i][2] = '*';
-      menu_opts[i] = options[i];
+        options[i][0] = '*';
+      menu_opts[i] = buildMenuItem(MENUITEM_SMALL, options[i], NULL);
     }
 
-    menu_opts[LAST_MODE] = "   --Go Back.";
-    menu_opts[LAST_MODE+1] = NULL;
+    menu_opts[LAST_MODE] = buildMenuItem(MENUITEM_SMALL, "<--Go Back", NULL);
+    menu_opts[LAST_MODE+1] = buildMenuItem(MENUITEM_NULL, NULL, NULL);
 
-    chosen_item = get_menu_selection(title_headers, menu_opts, 1, mode);
-    if (chosen_item >= LAST_MODE || strlen(menu_opts[chosen_item]) == 0) {
+    ret = get_menu_selection(title_headers, TABS, menu_opts, 1, mode);
+    if (ret.result >= LAST_MODE || strlen(menu_opts[ret.result].title) == 0) {
       //back
       res=1;
       break;
     }
-    if (chosen_item == BOOT_NORMAL) {
+    if (ret.result == BOOT_NORMAL) {
       if (!file_exists((char*) FILE_STOCK)) {
         //disable stock boot in CyanogenMod for locked devices
         LOGI("Function disabled in this version\n");
         continue;
       }
     }
-    if (chosen_item == BOOT_2NDSYSTEM) {
+    if (ret.result == BOOT_2NDSYSTEM) {
       if (!file_exists((char*) FILE_2NDSYSTEM)) {
         LOGE("Script not found :\n%s\n", FILE_2NDSYSTEM);
         continue;
       }
     }
-    if (set_default_bootmode(chosen_item) == 0) {
+    if (set_default_bootmode(ret.result) == 0) {
       ui_print("Done..\n");
       continue;
     }
@@ -354,24 +375,24 @@ int show_menu_system(void) {
   };
   char** title_headers = prepend_title(headers);
 
-  char* items[] =  {
-        "  +Overclock -->",
-        "  [UnRooting]",
-        "  [Uninstall BootMenu]",
-        "  --Go Back.",
-        NULL
+  struct UiMenuItem items[] = {
+    {MENUITEM_SMALL, "Overclock", NULL},
+    {MENUITEM_SMALL, "UnRooting", NULL},
+    {MENUITEM_SMALL, "Uninstall BootMenu", NULL},
+    {MENUITEM_SMALL, "<--Go Back", NULL},
+    {MENUITEM_NULL, NULL, NULL},
   };
 
   for (;;) {
 
     if ((stat("/system/app/Superuser.apk", &buf) < 0) && (stat("/system/app/superuser.apk", &buf) < 0))
-      items[1] = "  [Rooting]";
+      items[1].title = "Rooting";
     else
-      items[1] = "  [UnRooting]";
+      items[1].title = "UnRooting";
 
-    int chosen_item = get_menu_selection(title_headers, items, 1, select);
+    struct UiMenuResult ret = get_menu_selection(title_headers, TABS, items, 1, select);
 
-    switch (chosen_item) {
+    switch (ret.result) {
 
       case SYSTEM_OVERCLOCK:
         status = show_menu_overclock();
@@ -390,7 +411,7 @@ int show_menu_system(void) {
       default:
         return 0;
     }
-    select = chosen_item;
+    select = ret.result;
   }
 
   free_menu_headers(title_headers);
@@ -429,23 +450,23 @@ int show_menu_tools(void) {
   };
   char** title_headers = prepend_title(headers);
 
-  char* items[] =  {
-        "  [ADB Daemon]",
-        "",
-        "  [Share SD Card]",
-        "  [Share Drivers]",
-        "  [Share system]",
-        "  [Share data]",
-        "  [Share MMC - Dangerous!]",
-        "",
-        "  [Stop USB Share]",
-        "  --Go Back.",
-        NULL
+  struct UiMenuItem items[] = {
+    {MENUITEM_SMALL, "ADB Daemon", NULL},
+    {MENUITEM_SMALL, "", NULL},
+    {MENUITEM_SMALL, "Share SD Card", NULL},
+    {MENUITEM_SMALL, "Share Drivers", NULL},
+    {MENUITEM_SMALL, "Share system", NULL},
+    {MENUITEM_SMALL, "Share data", NULL},
+    {MENUITEM_SMALL, "Share MMC - Dangerous!", NULL},
+    {MENUITEM_SMALL, "", NULL},
+    {MENUITEM_SMALL, "Stop USB Share", NULL},
+    {MENUITEM_SMALL, "<--Go Back", NULL},
+    {MENUITEM_NULL, NULL, NULL},
   };
 
-  int chosen_item = get_menu_selection(title_headers, items, 1, 0);
+  struct UiMenuResult ret = get_menu_selection(title_headers, TABS, items, 1, 0);
 
-  switch (chosen_item) {
+  switch (ret.result) {
     case TOOL_ADB:
       ui_print("ADB Deamon....");
       status = exec_script(FILE_ADBD, ENABLE);
@@ -529,19 +550,19 @@ int show_menu_recovery(void) {
   };
   char** title_headers = prepend_title(headers);
 
-  char* items[] =  {
-        "  [Custom Recovery]",
+  struct UiMenuItem items[] = {
+    {MENUITEM_SMALL, "Custom Recovery", NULL},
 #ifdef USE_STABLE_RECOVERY
-        "  [Stable Recovery]",
+    {MENUITEM_SMALL, "Stable Recovery", NULL},
 #endif
-        "  [Stock Recovery]",
-        "  --Go Back.",
-        NULL
+    {MENUITEM_SMALL, "Stock Recovery", NULL},
+    {MENUITEM_SMALL, "<--Go Back", NULL},
+    {MENUITEM_NULL, NULL, NULL},
   };
 
-  int chosen_item = get_menu_selection(title_headers, items, 1, 0);
+  struct UiMenuResult ret = get_menu_selection(title_headers, TABS, items, 1, 0);
 
-  switch (chosen_item) {
+  switch (ret.result) {
     case RECOVERY_CUSTOM:
       ui_print("Starting Recovery..\n");
       ui_print("This can take a couple of seconds.\n");

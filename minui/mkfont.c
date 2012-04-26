@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef unsigned int    guint;
+typedef unsigned char guint8;
+#include "ExportedFont.h"
+
 int main(int argc, char *argv)
 {
     unsigned n;
@@ -13,14 +17,8 @@ int main(int argc, char *argv)
     m = 0;
     x = gimp_image.pixel_data;
 
-    printf("struct {\n");
-    printf("  unsigned width;\n");
-    printf("  unsigned height;\n");
-    printf("  unsigned cwidth;\n");
-    printf("  unsigned cheight;\n");
-    printf("  unsigned char rundata[];\n");
-    printf("} font = {\n");
-    printf("  .width = %d,\n  .height = %d,\n  .cwidth = %d,\n  .cheight = %d,\n", gimp_image.width, gimp_image.height,
+    printf("struct CFont font = {\n");
+    printf("  .width = %d,\n  .height = %d,\n  .cwidth = %d,\n  .cheight = %d,\n  .cheightfix = 0,\n", gimp_image.width, gimp_image.height,
            gimp_image.width / 96, gimp_image.height);
     printf("  .rundata = {\n");
    

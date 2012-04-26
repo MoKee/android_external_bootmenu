@@ -18,9 +18,17 @@
 #define _MINUI_H_
 
 #include <stdbool.h>
+#include <pixelflinger/pixelflinger.h>
 
 typedef void* gr_surface;
 typedef unsigned short gr_pixel;
+
+struct UiColor {
+	unsigned char r;
+	unsigned char g;
+	unsigned char b;
+	unsigned char a;
+};
 
 int gr_init(void);
 void gr_exit(void);
@@ -32,14 +40,23 @@ void gr_flip(void);
 void gr_fb_blank(bool blank);
 
 void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+void gr_set_uicolor(struct UiColor c);
+struct UiColor gr_make_uicolor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 void gr_fill(int x, int y, int w, int h);
+void gr_drawLine(int ax, int ay, int bx, int by, int width);
+void gr_drawRect(int ax, int ay, int bx, int by, int width);
 int gr_text(int x, int y, const char *s);
+int gr_text_cut(int _x, int _y, const char *s, int minx, int maxx, int miny, int maxy);
 int gr_measure(const char *s);
 void gr_font_size(int *x, int *y);
 
 void gr_blit(gr_surface source, int sx, int sy, int w, int h, int dx, int dy);
 unsigned int gr_get_width(gr_surface surface);
 unsigned int gr_get_height(gr_surface surface);
+void gr_setfont(int i);
+int gr_getfont_cwidth();
+int gr_getfont_cheight();
+int gr_getfont_cheightfix();
 
 
 // input event structure, include <linux/input.h> for the definition.
@@ -62,3 +79,29 @@ void res_free_surface(gr_surface* pSurface);
 int gr_fb_test(void);
 
 #endif
+
+typedef struct {
+    GGLSurface texture;
+    unsigned cwidth;
+    unsigned cheight;
+    unsigned ascent;
+} GRFont;
+
+struct CFont {
+  unsigned width;
+  unsigned height;
+  unsigned cwidth;
+  unsigned cheight;
+  unsigned cheightfix;
+  unsigned char rundata[];
+};
+
+struct UiFont {
+  struct CFont *cfont;
+  GRFont *gr_font;
+  void * gr_fontmem;
+  unsigned char rundata[];
+};
+
+#define FONT_NORMAL 0
+#define FONT_BIG 1

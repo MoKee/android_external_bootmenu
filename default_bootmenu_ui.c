@@ -26,6 +26,13 @@ char* MENU_HEADERS[] = {
     NULL
 };
 
+char* TABS[] = {
+    "Bootmenu",
+    "Settings",
+    "Logs",
+    NULL
+};
+
 int device_toggle_display(volatile char* key_pressed, int key_code) {
     //return key_code == KEY_HOME;
     return 0;
@@ -59,6 +66,9 @@ int device_handle_key(int key_code, int visible) {
             case KEY_BACKSPACE:
             case KEY_BACK:
                 return ACTION_CANCEL;
+		
+			case KEY_SEARCH:
+				return ACTION_NEXTTAB;
         }
     }
 
