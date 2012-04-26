@@ -298,8 +298,10 @@ static int wait_key(int key) {
   return result;
 }
 
-
-static int run_bootmenu_ui(void) {
+/**
+ * Start of UI
+ */
+static int run_bootmenu_ui(int mode) {
 
   int adb_started = 0;
 
@@ -310,21 +312,33 @@ static int run_bootmenu_ui(void) {
   LOGI("Start Android BootMenu....\n");
   ui_reset_progress();
 
-
   main_headers = prepend_title((const char**)MENU_HEADERS);
- /* ui_start_menu(main_headers, TABS, MENU_ITEMS, 0);
+
+  /*
+  ui_start_menu(main_headers, TABS, MENU_ITEMS, 0);
   ui_wait_key();
-  ui_end_menu();*/
+  ui_end_menu();
+  */
 
   //get_menu_selection(main_headers, TABS, MENU_ITEMS, 0, 0);
 
-  // init sbin rootfs and mount cache
-  exec_script(FILE_PRE_MENU, DISABLE);
-
+  /* can be buggy, adb could lock filesystem
   if (!adb_started && usb_connected()) {
     ui_print("Usb connected, starting adb...\n\n");
-    //exec_script(FILE_ADBD, DISABLE);
+    exec_script(FILE_ADBD, DISABLE);
   }
+  */
+
+  if (mode == int_mode("shell")) {
+    ui_print("\n");
+    ui_print("Current mode: %s\n", str_mode(mode));
+    if (!usb_connected()) {
+      ui_print(" But USB is not connected !\n");
+    }
+  }
+
+  checkup_report();
+  //ui_reset_progress();
 
   prompt_and_wait();
   free_menu_headers(main_headers);
@@ -425,39 +439,9 @@ static int run_bootmenu(void) {
 
     if (status == BUTTON_PRESSED ) {
 
-        ui_init();
-        ui_set_background(BACKGROUND_DEFAULT);
-        ui_show_text(ENABLE);
         led_alert("button-backlight", ENABLE);
 
-        LOGI("Start Android BootMenu....\n");
-
-        main_headers = prepend_title((const char**)MENU_HEADERS);
-
-        /* can be buggy, adb could lock filesystem
-        if (!adb_started && usb_connected()) {
-            ui_print("Usb connected, starting adb...\n\n");
-            exec_script(FILE_ADBD, DISABLE);
-        }
-        */
-
-        ui_print("Default mode: %s\n", str_mode(defmode));
-
-        if (mode == int_mode("shell")) {
-            ui_print("\n");
-            ui_print("Current mode: %s\n", str_mode(mode));
-            if (!usb_connected()) {
-                ui_print(" But USB is not connected !\n");
-            }
-        }
-
-        checkup_report();
-        ui_reset_progress();
-
-        prompt_and_wait();
-        free_menu_headers(main_headers);
-
-        ui_finish();
+        run_bootmenu_ui(mode);
     }
 
   }
@@ -468,14 +452,17 @@ static int run_bootmenu(void) {
 /**
  * main()
  *
- * Here is the hijack part, logwrapper is linked to bootmenu
- * we trap some of logged commands from init.rc
+ * Here is the hijack init.rc part, logwrapper is a symlink pointing
+ * to this bootmenu binary, we trap some of logged commands from init.rc
  *
  */
 int main(int argc, char **argv) {
   int result;
 
   if (argc == 2 && 0 == strcmp(argv[1], "postbootmenu")) {
+
+    /* init.rc call: "exec bootmenu postbootmenu" */
+
     exec_script(FILE_OVERCLOCK, DISABLE);
     result = exec_script(FILE_POST_MENU, DISABLE);
     bypass_sign("no");
@@ -483,20 +470,30 @@ int main(int argc, char **argv) {
     return result;
   }
   else if (NULL != strstr(argv[0], "bootmenu")) {
+
+    /* Direct UI, without key test */
+
     fprintf(stdout, "Run BootMenu..\n");
-    result = run_bootmenu_ui();
+    exec_script(FILE_PRE_MENU, DISABLE);
+    int mode = get_bootmode(0,0);
+    result = run_bootmenu_ui(mode);
     sync();
     return result;
   }
   else if (argc >= 3 && 0 == strcmp(argv[2], "userdata")) {
-    result = run_bootmenu_ui();
+
+    /* init.rc call: "exec logwrapper mount.sh userdata" */
+
+    result = run_bootmenu();
     real_execute(argc, argv);
     bypass_sign("no");
     sync();
     return result;
   }
   else if (argc >= 3 && 0 == strcmp(argv[2], "pds")) {
-    //kept for stock rom compatibility, please use postbootmenu
+
+    /* kept for stock rom compatibility, please use postbootmenu parameter */
+
     real_execute(argc, argv);
     exec_script(FILE_OVERCLOCK, DISABLE);
     result = exec_script(FILE_POST_MENU, DISABLE);
