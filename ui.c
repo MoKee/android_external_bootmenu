@@ -278,7 +278,7 @@ static int draw_menu_item(int top, int item) {
         draw_menuitem_selection(bgtop,bgheight);
 
         // draw text
-        gr_setfont(FONT_BIG);
+        gr_setfont(FONT_ITEM);
         gr_set_uicolor(color_text);
         gr_text_cut(square_inner_left, top+height-height/2+gr_getfont_cheight()/2-gr_getfont_cheightfix(), menu[item].title,
                     square_inner_left, square_inner_right, square_inner_top, bgbottom);
@@ -359,7 +359,7 @@ static void draw_screen_locked(void)
     i = 0;
     if (show_menu) {
       // draw menu
-      gr_setfont(FONT_BIG);
+      gr_setfont(FONT_ITEM);
 
       for (; i < menu_items; ++i) {
         if (i == menu_sel) {
@@ -375,7 +375,7 @@ static void draw_screen_locked(void)
     }
 
     // draw log
-    gr_setfont(FONT_NORMAL);
+    gr_setfont(FONT_LOGS);
     gr_color(255, 255, 0, 255);
     for (i=0; i < text_rows; ++i) {
         draw_log_line(i, text[(i+text_top) % text_rows]);
@@ -386,11 +386,16 @@ static void draw_screen_locked(void)
     gr_color(0, 0, 0, 160);
     gr_fill(0, 0, gr_fb_width(), STATUSBAR_HEIGHT);
 
+    // print version
+    int yBar = gr_getfont_cheight()/2+STATUSBAR_HEIGHT/2-gr_getfont_cheightfix();
+    gr_color(0, 170, 255, 255);
+    gr_text(0, yBar, "Bootmenu v" BOOTMENU_VERSION);
+
     // draw clock
-    char time[50];
+    char time[16];
     ui_get_time(time);
     gr_color(0, 170, 255, 255);
-    gr_text(gr_fb_width()/2-5*gr_getfont_cwidth()/2,gr_getfont_cheight()/2+STATUSBAR_HEIGHT/2-gr_getfont_cheightfix(),time);
+    gr_text(gr_fb_width()/2 + 5*gr_getfont_cwidth()/2, yBar, time);
 
     #ifdef BOARD_WITH_CPCAP
     // draw battery
@@ -402,11 +407,12 @@ static void draw_screen_locked(void)
     int level_s_size;
     for(level_s_size=0; level_s[level_s_size]; ++level_s_size) {}
 
-    gr_text(gr_fb_width()-level_s_size*gr_getfont_cwidth()-statusbar_right,gr_getfont_cheight()/2+STATUSBAR_HEIGHT/2-gr_getfont_cheightfix(),level_s);
+    gr_text(gr_fb_width()-level_s_size*gr_getfont_cwidth()-statusbar_right, yBar, level_s);
     #endif
 
     // draw tabcontrol
     int tableft=0;
+    gr_setfont(FONT_HEAD);
     gr_color(0, 0, 0, 255);
     gr_fill(0, STATUSBAR_HEIGHT, gr_fb_width(), STATUSBAR_HEIGHT+TABCONTROL_HEIGHT);
     if(tabitems!=NULL) {
@@ -423,7 +429,8 @@ static void draw_screen_locked(void)
 
     // DEBUG: Pointer-location
     gr_color(255, 0, 0, 255);
-    gr_fill(pointerx, pointery, pointerx+10, pointery+10);
+    if (pointerx != -1)
+      gr_fill(pointerx, pointery, pointerx+10, pointery+10);
   }
 }
 
@@ -972,12 +979,11 @@ void ui_get_time(char* result)
 {
   time_t rawtime;
   struct tm * timeinfo;
-  //char buffer [80];
 
-  time ( &rawtime );
-  timeinfo = localtime ( &rawtime );
+  time(&rawtime);
+  timeinfo = localtime(&rawtime);
 
-  strftime (result,80,"%I:%M",timeinfo);
+  strftime(result, 8, "%H:%M", timeinfo);
 }
 
 void ui_set_activeTab(int i)
@@ -1092,6 +1098,7 @@ struct ui_touchresult ui_handle_touch(struct ui_input_event uev) {
         if(ui_inside_menuitem(i, pointerx_start, pointery_start)==1 && ui_inside_menuitem(i, uev.posx, uev.posy)==1 && enable_scrolling==0) {
           ret.type = TOUCHRESULT_TYPE_ONCLICK_LIST;
           ret.item = i;
+          vibrate(VIBRATOR_HARD_MS); /* big vibration on release */
           break;
         }
       }

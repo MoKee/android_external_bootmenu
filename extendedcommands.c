@@ -112,25 +112,6 @@ int show_menu_boot(void) {
   };
   char** title_headers = prepend_title(headers);
 
-  /*char* items[(MODES_COUNT - 3 + 6)] = {
-        "  +Set Default: [" LABEL_2NDINIT "] -->",
-        "  [" LABEL_2NDINIT "]",
-        "  [" LABEL_2NDBOOT "]",
-        "  [" LABEL_2NDSYSTEM "]",
-        "  [" LABEL_NORMAL "]",
-
-        "  [" LABEL_TOGGLE_ADB "]",
-
-#ifdef DEBUG_ALLOC
-        "  [test fb]",
-        "  [test evt]",
-        "  [test png]",
-        "  [test all]",
-#endif
-        "  --Go Back.",
-        NULL
-  };*/
-
   struct UiMenuItem items[(MODES_COUNT - 3 + 6)] = {
     {MENUITEM_SMALL, "Set Default: [" LABEL_2NDINIT "]", NULL},
     {MENUITEM_SMALL, LABEL_2NDINIT, NULL},
@@ -170,7 +151,7 @@ int show_menu_boot(void) {
     }
 
     //ADB Toggle
-    sprintf(opt_adb, LABEL_TOGGLE_ADB " %s", boot_with_adb?"active":"disabled");
+    sprintf(opt_adb, LABEL_TOGGLE_ADB " %s", boot_with_adb ? "enable":"disable");
     items[TOGGLE_ADB].title = opt_adb;
 
     ret = get_menu_selection(title_headers, TABS, items, 1, 0);
@@ -425,6 +406,7 @@ int show_menu_system(void) {
 /**
  * show_menu_tools()
  *
+ * ADB shell and usb shares
  */
 int show_menu_tools(void) {
 

@@ -41,4 +41,11 @@ endif
 
 include $(BUILD_STATIC_LIBRARY)
 
+#include $(CLEAR_VARS)
+#LOCAL_MODULE := bm_mkfont
+#LOCAL_MODULE_STEM := mkfont
+#LOCAL_MODULE_TAGS := optional
+#LOCAL_SRC_FILES := mkfont.c
+#include $(BUILD_EXECUTABLE)
+
 endif #BOARD_USES_BOOTMENU

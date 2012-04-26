@@ -103,5 +103,13 @@ struct UiFont {
   unsigned char rundata[];
 };
 
-#define FONT_NORMAL 0
-#define FONT_BIG 1
+#define FONT_HEAD 0
+#define FONT_ITEM 1
+#define FONT_LOGS 2
+
+// Vibrator
+int vibrate(int timeout_ms);
+
+#define VIBRATOR_TIME_MS        22
+#define VIBRATOR_HARD_MS        41
+

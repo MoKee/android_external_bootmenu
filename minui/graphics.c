@@ -45,14 +45,14 @@
 #endif
 
 #include "minui.h"
+#include "font_10x18.h"
 #include "roboto_15x24.h"
-#include "font_19x31.h"
 
 #include "../common.h"
 
 
-static struct UiFont FONTS[2];
-static int selectedFont = FONT_NORMAL;
+static struct UiFont FONTS[3];
+static int selectedFont = FONT_HEAD;
 static GGLContext *gr_context = 0;
 static GGLSurface gr_framebuffer[2];
 static GGLSurface gr_mem_surface;
@@ -469,8 +469,9 @@ static struct UiFont gr_init_font(struct CFont *font_p)
 
 static void gr_init_fonts(void)
 {
-    FONTS[FONT_NORMAL] = gr_init_font(&font);
-    FONTS[FONT_BIG] = gr_init_font(&bigfont);
+    FONTS[FONT_HEAD] = gr_init_font(&bigfont);
+    FONTS[FONT_ITEM] = gr_init_font(&bigfont);
+    FONTS[FONT_LOGS] = gr_init_font(&font);
 }
 
 static void gr_free_font(struct UiFont *uifont)
@@ -485,8 +486,9 @@ static void gr_free_font(struct UiFont *uifont)
 
 static void gr_free_fonts(void)
 {
-    gr_free_font(&FONTS[FONT_NORMAL]);
-    gr_free_font(&FONTS[FONT_BIG]);
+    gr_free_font(&FONTS[FONT_HEAD]);
+    gr_free_font(&FONTS[FONT_ITEM]);
+    gr_free_font(&FONTS[FONT_LOGS]);
 }
 
 int gr_init(void)

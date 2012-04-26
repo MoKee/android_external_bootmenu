@@ -30,7 +30,6 @@
 #define MAX_DEVICES 16
 
 #define VIBRATOR_TIMEOUT_FILE	"/sys/class/timed_output/vibrator/enable"
-#define VIBRATOR_TIME_MS	50
 
 #define ABS_MT_POSITION		0x2a	/* Group a set of X and Y */
 #define ABS_MT_AMPLITUDE	0x2b	/* Group a set of Z and W */

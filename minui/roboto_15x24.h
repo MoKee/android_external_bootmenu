@@ -1,4 +1,4 @@
-struct CFont font = {
+struct CFont bigfont = {
   .width = 1440,
   .height = 24,
   .cwidth = 15,
