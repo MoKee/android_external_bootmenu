@@ -248,6 +248,8 @@ int show_menu_boot(void) {
       case BOOT_FBTEST:
         led_alert("green", 1);
         gr_fb_test();
+        ui_stop_redraw();
+        ui_resume_redraw();
         led_alert("green", 0);
         res = 0;
         goto exit_loop;
@@ -530,13 +532,13 @@ int show_menu_tools(void) {
  */
 int show_menu_recovery(void) {
 
-#ifndef USE_STABLE_RECOVERY
-  #define RECOVERY_CUSTOM     0
-  #define RECOVERY_STOCK      1
-#else
+#ifdef USE_STABLE_RECOVERY
   #define RECOVERY_CUSTOM     0
   #define RECOVERY_STABLE     1
   #define RECOVERY_STOCK      2
+#else
+  #define RECOVERY_CUSTOM     0
+  #define RECOVERY_STOCK      1
 #endif
 
   int status, res=0;
@@ -566,7 +568,11 @@ int show_menu_recovery(void) {
     case RECOVERY_CUSTOM:
       ui_print("Starting Recovery..\n");
       ui_print("This can take a couple of seconds.\n");
+      ui_show_text(DISABLE);
+      ui_stop_redraw();
       status = exec_script(FILE_CUSTOMRECOVERY, ENABLE);
+      ui_resume_redraw();
+      ui_show_text(ENABLE);
       if (!status) res = 1;
       break;
 
@@ -574,7 +580,11 @@ int show_menu_recovery(void) {
     case RECOVERY_STABLE:
       ui_print("Starting Recovery..\n");
       ui_print("This can take a couple of seconds.\n");
+      ui_show_text(DISABLE);
+      ui_stop_redraw();
       status = exec_script(FILE_STABLERECOVERY, ENABLE);
+      ui_resume_redraw();
+      ui_show_text(ENABLE);
       if (!status) res = 1;
       break;
 #endif
@@ -1051,6 +1061,9 @@ int snd_exec_script(const char* filename, int ui) {
 /**
  * real_execute()
  *
+ * when bootmenu is substitued to a system binary (like logwrapper)
+ * we need also to execute the original binary, renamed logwrapper.bin
+ *
  */
 int real_execute(int r_argc, char** r_argv) {
   char* hijacked_executable = r_argv[0];
@@ -1058,14 +1071,15 @@ int real_execute(int r_argc, char** r_argv) {
   int i;
 
   char real_executable[PATH_MAX];
-  sprintf(real_executable, "%s.bin", hijacked_executable);
   char ** argp = (char **)malloc(sizeof(char *) * (r_argc + 1));
-  for (i = 0; i < r_argc; i++) {
+
+  sprintf(real_executable, "%s.bin", hijacked_executable);
+
+  argp[0] = real_executable;
+  for (i = 1; i < r_argc; i++) {
       argp[i] = r_argv[i];
   }
   argp[r_argc] = NULL;
-
-  argp[0] = real_executable;
 
   result = exec_and_wait(argp);
 
@@ -1083,9 +1097,9 @@ int real_execute(int r_argc, char** r_argv) {
  */
 int file_exists(char * file)
 {
-    struct stat file_info;
-    memset(&file_info,0,sizeof(file_info));
-    return (int) (0 == stat(file, &file_info));
+  struct stat file_info;
+  memset(&file_info,0,sizeof(file_info));
+  return (int) (0 == stat(file, &file_info));
 }
 
 /**

@@ -139,9 +139,11 @@ struct UiMenuResult get_menu_selection(char** headers, char** tabs, struct UiMen
     }*/
 #endif
 
-    struct ui_input_event eventresult = ui_wait_input();
+    struct ui_input_event eventresult;
     int visible = ui_text_visible();
     int action = 0;
+
+    ui_wait_input(&eventresult);
 
     switch(eventresult.utype) {
       case UINPUTEVENT_TYPE_KEY:
@@ -296,6 +298,42 @@ static int wait_key(int key) {
   return result;
 }
 
+
+static int run_bootmenu_ui(void) {
+
+  int adb_started = 0;
+
+  // initialize ui
+  ui_init();
+  //ui_set_background(BACKGROUND_DEFAULT);
+  ui_show_text(ENABLE);
+  LOGI("Start Android BootMenu....\n");
+  ui_reset_progress();
+
+
+  main_headers = prepend_title((const char**)MENU_HEADERS);
+ /* ui_start_menu(main_headers, TABS, MENU_ITEMS, 0);
+  ui_wait_key();
+  ui_end_menu();*/
+
+  //get_menu_selection(main_headers, TABS, MENU_ITEMS, 0, 0);
+
+  // init sbin rootfs and mount cache
+  exec_script(FILE_PRE_MENU, DISABLE);
+
+  if (!adb_started && usb_connected()) {
+    ui_print("Usb connected, starting adb...\n\n");
+    //exec_script(FILE_ADBD, DISABLE);
+  }
+
+  prompt_and_wait();
+  free_menu_headers(main_headers);
+
+  ui_finish();
+  return 0;
+}
+
+
 /**
  * run_bootmenu()
  *
@@ -446,12 +484,12 @@ int main(int argc, char **argv) {
   }
   else if (NULL != strstr(argv[0], "bootmenu")) {
     fprintf(stdout, "Run BootMenu..\n");
-    result = run_bootmenu();
+    result = run_bootmenu_ui();
     sync();
     return result;
   }
   else if (argc >= 3 && 0 == strcmp(argv[2], "userdata")) {
-    result = run_bootmenu();
+    result = run_bootmenu_ui();
     real_execute(argc, argv);
     bypass_sign("no");
     sync();

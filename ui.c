@@ -55,15 +55,18 @@ static int square_inner_right;
 static int square_inner_bottom;
 static int square_inner_left;
 
-#define REDRAWTHREAD_INDETERMINATE_FPS 60
+#define REDRAWTHREAD_SLOW_FPS 15 /* idle state */
+#define REDRAWTHREAD_FAST_FPS 60 /* for slides */
 static pthread_mutex_t gUpdateMutex = PTHREAD_MUTEX_INITIALIZER;
+
+/* Progress bar, background and other pngs */
 static gr_surface gBackgroundIcon[NUM_BACKGROUND_ICONS];
+
+#define PROGRESSBAR_INDETERMINATE_FPS 15
+#define PROGRESSBAR_INDETERMINATE_STATES 1
+static gr_surface gProgressBarIndeterminate[PROGRESSBAR_INDETERMINATE_STATES];
 static gr_surface gProgressBarEmpty;
 static gr_surface gProgressBarFill;
-
-#define PROGRESSBAR_INDETERMINATE_STATES 1
-#define PROGRESSBAR_INDETERMINATE_FPS 15
-static gr_surface gProgressBarIndeterminate[PROGRESSBAR_INDETERMINATE_STATES];
 
 static const struct { gr_surface* surface; const char *name; } BITMAPS[] = {
     { &gBackgroundIcon[BACKGROUND_DEFAULT], "background" },
@@ -134,8 +137,12 @@ static struct timeval bounceback_start_time;
 static int menuToptmp = 0;
 static int bounceback_targetpos = 0;
 
-
 static int show_menu_selection=0;
+
+// threads ids (reset to 0 to stop them)
+static pthread_t t_input = 0;
+static pthread_t t_redraw = 0;
+static pthread_t t_progress = 0;
 
 // Clear the screen and draw the currently selected background icon (if any).
 // Should only be called with gUpdateMutex locked.
@@ -220,6 +227,7 @@ static int draw_menu_item(int top, int item) {
   int height=get_menuitem_height(item);
   struct UiColor color_text;
   struct UiColor color_background;
+
   switch(menu[item].type) {
 
     case MENUITEM_SMALL:
@@ -272,7 +280,8 @@ static int draw_menu_item(int top, int item) {
         // draw text
         gr_setfont(FONT_BIG);
         gr_set_uicolor(color_text);
-        gr_text_cut(square_inner_left, top+height-height/2+gr_getfont_cheight()/2-gr_getfont_cheightfix(), menu[item].title, square_inner_left, square_inner_right, square_inner_top, bgbottom);
+        gr_text_cut(square_inner_left, top+height-height/2+gr_getfont_cheight()/2-gr_getfont_cheightfix(), menu[item].title,
+                    square_inner_left, square_inner_right, square_inner_top, bgbottom);
 
         // draw bottom_line
         if(draw_bottom_line==1) {
@@ -477,7 +486,8 @@ static void update_progress_locked(void)
 // Keeps the progress bar updated, even when the process is otherwise busy.
 static void *progress_thread(void *cookie)
 {
-  for (;;) {
+  bool bExitFlag = false;
+  while (!bExitFlag) {
     usleep(1000000 / PROGRESSBAR_INDETERMINATE_FPS);
     pthread_mutex_lock(&gUpdateMutex);
 
@@ -499,6 +509,8 @@ static void *progress_thread(void *cookie)
         }
     }
 
+    bExitFlag = (t_progress == 0);
+
     pthread_mutex_unlock(&gUpdateMutex);
   }
   return NULL;
@@ -510,8 +522,9 @@ static void *input_thread(void *cookie)
   int rel_sum = 0;
   int fake_key = 0;
   int drag = 0;
+  bool bExitFlag = false;
 
-  for (;;) {
+  while (!bExitFlag) {
     // wait for the next key event
     struct input_event ev;
     struct ui_input_event uev;
@@ -608,16 +621,24 @@ static void *input_thread(void *cookie)
         reboot(RB_AUTOBOOT);
     }
 
-  } // for(;;)
+    bExitFlag = (t_input == 0);
+
+  } // thread loop
+
   return NULL;
 }
 
+/**
+ * TODO: REDRAWTHREAD_IDLE_FPS when finger doesnt touch the screen.
+ */
 static void *redraw_thread(void *cookie)
 {
-  for (;;) {
-    usleep(1000000 / REDRAWTHREAD_INDETERMINATE_FPS);
+  bool bNeedExit = false;
+  while (!bNeedExit) {
+    usleep(1000000 / REDRAWTHREAD_FAST_FPS);
     pthread_mutex_lock(&gUpdateMutex);
     update_screen_locked();
+    bNeedExit = (t_redraw == 0);
     pthread_mutex_unlock(&gUpdateMutex);
   }
   return NULL;
@@ -657,13 +678,16 @@ void ui_init(void)
 
   ui_create_bitmaps();
 
-  pthread_t t;
-  pthread_create(&t, NULL, progress_thread, NULL);
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  pthread_create(&t_progress, &attr, progress_thread, NULL);
 
-  pthread_create(&t, NULL, input_thread, NULL);
+  pthread_attr_init(&attr);
+  pthread_create(&t_input, &attr, input_thread, NULL);
   evt_enabled = 1;
 
-  pthread_create(&t, NULL, redraw_thread, NULL);
+  pthread_attr_init(&attr);
+  pthread_create(&t_redraw, &attr, redraw_thread, NULL);
 }
 
 void ui_free_bitmaps(void)
@@ -683,19 +707,41 @@ void evt_init(void)
 {
   ev_init();
 
-  if (!evt_enabled) {
-    pthread_t t;
-    pthread_create(&t, NULL, input_thread, NULL);
-    evt_enabled = 1;
+  if (!evt_enabled && t_input == 0) {
+    pthread_create(&t_input, NULL, input_thread, NULL);
   }
+  evt_enabled = 1;
 }
 
 void evt_exit(void)
 {
   if (evt_enabled) {
+
+    if (t_input != 0) {
+      pthread_detach(t_input);
+      t_input = 0;
+      usleep(1000);
+    }
     ev_exit();
+
   }
   evt_enabled = 0;
+}
+
+void ui_stop_redraw(void)
+{
+  if (t_redraw) {
+    pthread_detach(t_redraw);
+    t_redraw = 0;
+    usleep(1000);
+  }
+}
+
+void ui_resume_redraw(void)
+{
+  if (t_redraw) return;
+
+  pthread_create(&t_redraw, NULL, redraw_thread, NULL);
 }
 
 void ui_final(void)
@@ -703,6 +749,8 @@ void ui_final(void)
   evt_exit();
 
   ui_show_text(0);
+  ui_stop_redraw();
+
   gr_exit();
 
   //ui_free_bitmaps();
@@ -881,25 +929,31 @@ void ui_show_text(int visible)
 
 int ui_wait_key()
 {
-  int key = ui_wait_input().code;
-
-  return key;
-}
-
-struct ui_input_event ui_wait_input()
-{
   struct ui_input_event st_key;
 
+  ui_wait_input(&st_key);
+
+  return st_key.code;
+}
+
+int ui_wait_input(struct ui_input_event* pkey)
+{
+  int ret = 0;
   pthread_mutex_lock(&key_queue_mutex);
-  while (key_queue_len == 0) {
-      pthread_cond_wait(&key_queue_cond, &key_queue_mutex);
+
+  while (key_queue_len == 0 && evt_enabled) {
+    pthread_cond_wait(&key_queue_cond, &key_queue_mutex);
   }
 
-  st_key = key_queue[0];
-  memcpy(&key_queue[0], &key_queue[1], sizeof(struct ui_input_event) * --key_queue_len);
-  pthread_mutex_unlock(&key_queue_mutex);
+  if (key_queue_len > 0) {
+    memcpy(pkey, &key_queue[0], sizeof(struct ui_input_event));
+    memcpy(&key_queue[0], &key_queue[1], sizeof(struct ui_input_event) * --key_queue_len);
+  } else {
+    ret = -1;
+  }
 
-  return st_key;
+  pthread_mutex_unlock(&key_queue_mutex);
+  return ret;
 }
 
 int ui_key_pressed(int key)

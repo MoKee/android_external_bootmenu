@@ -18,6 +18,9 @@
 #define RECOVERY_COMMON_H
 
 #include <stdio.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <linux/types.h>
 
 #define RESULT_TAB  1
 #define RESULT_LIST 2
@@ -37,6 +40,27 @@ struct UiMenuItem {
   char *description;
 };
 
+#define UINPUTEVENT_TYPE_KEY 0
+#define UINPUTEVENT_TYPE_TOUCH_START 1
+#define UINPUTEVENT_TYPE_TOUCH_DRAG 2
+#define UINPUTEVENT_TYPE_TOUCH_RELEASE 3
+struct ui_input_event {
+  struct timeval time;
+  __u16 type;
+  __u16 code;
+  __s32 value;
+  int utype;
+  int posx;
+  int posy;
+};
+
+#define TOUCHRESULT_TYPE_EMPTY -1
+#define TOUCHRESULT_TYPE_ONCLICK_LIST 0
+#define TOUCHRESULT_TYPE_ONCLICK_TAB 1
+struct ui_touchresult {
+  int type;
+  int item;
+};
 
 // Initialize the graphics system.
 void ui_init();
@@ -45,9 +69,13 @@ void ui_final();
 void evt_init();
 void evt_exit();
 
+// Stop/resume redraw thread
+void ui_stop_redraw(void);
+void ui_resume_redraw(void);
+
 // Use KEY_* codes from <linux/input.h> or KEY_DREAM_* from "minui/minui.h".
 int ui_wait_key();            // waits for a key/button press, returns the code
-struct ui_input_event ui_wait_input();// waits for a input event
+int ui_wait_input(struct ui_input_event*);// waits for a input event
 int ui_key_pressed(int key);  // returns >0 if the code is currently pressed
 int ui_text_visible();        // returns >0 if text log is currently visible
 void ui_show_text(int visible);

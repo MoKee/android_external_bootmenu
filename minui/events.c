@@ -224,12 +224,12 @@ int ev_init(void)
     int fd;
 
     dir = opendir("/dev/input");
-    if(dir != 0) {
-        while((de = readdir(dir))) {
-//            fprintf(stderr,"/dev/input/%s\n", de->d_name);
-            if(strncmp(de->d_name,"event",5)) continue;
+    if (dir != 0) {
+        while ((de = readdir(dir))) {
+
+            if (strncmp(de->d_name,"event",5)) continue;
             fd = openat(dirfd(dir), de->d_name, O_RDONLY);
-            if(fd < 0) continue;
+            if (fd < 0) continue;
 
             ev_fds[ev_count].fd = fd;
             ev_fds[ev_count].events = POLLIN;
@@ -239,7 +239,11 @@ int ev_init(void)
             vk_init(&evs[ev_count]);
 
             ev_count++;
-            if(ev_count == MAX_DEVICES) break;
+            if (ev_count == MAX_DEVICES) break;
+        }
+
+        if (ev_count >= MAX_DEVICES) {
+            ev_count = MAX_DEVICES-1;
         }
     }
 
@@ -248,11 +252,17 @@ int ev_init(void)
 
 void ev_exit(void)
 {
-    while (ev_count-- > 0) {
-	if (evs[ev_count].vk_count) {
-		free(evs[ev_count].vks);
-		evs[ev_count].vk_count = 0;
-	}
+    if (ev_count >= MAX_DEVICES) {
+        ev_count = MAX_DEVICES-1;
+    }
+
+    while (ev_count > 0) {
+        ev_count--;
+        if (evs[ev_count].vk_count) {
+            free(evs[ev_count].vks);
+            evs[ev_count].vks = NULL;
+            evs[ev_count].vk_count = 0;
+        }
         close(ev_fds[ev_count].fd);
     }
 }
