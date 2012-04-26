@@ -87,7 +87,7 @@ const char* str_mode(int mode) {
 }
 
 /**
- * show_menu_boot() 
+ * show_menu_boot()
  *
  */
 int show_menu_boot(void) {
@@ -130,16 +130,16 @@ int show_menu_boot(void) {
         "  --Go Back.",
         NULL
   };*/
-  
+
   struct UiMenuItem items[(MODES_COUNT - 3 + 6)] = {
     {MENUITEM_SMALL, "Set Default: [" LABEL_2NDINIT "]", NULL},
     {MENUITEM_SMALL, LABEL_2NDINIT, NULL},
     {MENUITEM_SMALL, LABEL_2NDBOOT, NULL},
     {MENUITEM_SMALL, LABEL_2NDSYSTEM, NULL},
     {MENUITEM_SMALL, LABEL_NORMAL, NULL},
-    
+
     {MENUITEM_SMALL, LABEL_TOGGLE_ADB, NULL},
-    
+
 #ifdef DEBUG_ALLOC
     {MENUITEM_SMALL, "test fb", NULL},
     {MENUITEM_SMALL, "test evt", NULL},
@@ -623,7 +623,7 @@ int snd_init(int ui) {
 
   if (ui)
     ui_print("Wait 2 seconds....\n");
-  else 
+  else
     LOGI("Wait 2 seconds....\n");
 
   for(i = 2; i > 0; --i) {
@@ -653,14 +653,14 @@ int snd_boot(int ui) {
     ui_print("Start " LABEL_2NDBOOT " boot....\n");
   else
     LOGI("Start " LABEL_2NDBOOT " boot....\n");
-  
+
 #ifdef USE_DUALCORE_DIRTY_HACK
     if(!ui)
       status = snd_exec_script(FILE_2NDBOOT, ui);
     else
 #endif
       status = exec_script(FILE_2NDBOOT, ui);
-  
+
   if (status) {
     bypass_sign("no");
     return -1;
@@ -705,7 +705,7 @@ int snd_system(int ui) {
     else
 #endif
       status = exec_script(FILE_2NDSYSTEM, ui);
-  
+
   if (status) {
     bypass_sign("no");
     return -1;
@@ -1117,7 +1117,7 @@ int adb_started() {
   int res=0;
   FILE* f;
 
-  
+
 
   return res;
 }

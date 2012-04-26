@@ -26,21 +26,21 @@
 #define UINPUTEVENT_TYPE_TOUCH_DRAG 2
 #define UINPUTEVENT_TYPE_TOUCH_RELEASE 3
 struct ui_input_event {
-	struct timeval time;
-	__u16 type;
-	__u16 code;
-	__s32 value;
-	int utype;
-	int posx;
-	int posy;
+  struct timeval time;
+  __u16 type;
+  __u16 code;
+  __s32 value;
+  int utype;
+  int posx;
+  int posy;
 };
 
 #define TOUCHRESULT_TYPE_EMPTY -1
 #define TOUCHRESULT_TYPE_ONCLICK_LIST 0
 #define TOUCHRESULT_TYPE_ONCLICK_TAB 1
 struct ui_touchresult {
-	int type;
-	int item;
+  int type;
+  int item;
 };
 
 // Called when recovery starts up.  Returns 0.
@@ -91,7 +91,7 @@ int device_wipe_data();
 #define HIGHLIGHT_DOWN      -3
 #define SELECT_ITEM         -4
 #define ACTION_CANCEL       -5
-#define ACTION_NEXTTAB	    -6
+#define ACTION_NEXTTAB      -6
 
 #define GO_BACK            127
 

@@ -81,10 +81,10 @@ int gr_fb_test(void);
 #endif
 
 typedef struct {
-    GGLSurface texture;
-    unsigned cwidth;
-    unsigned cheight;
-    unsigned ascent;
+  GGLSurface texture;
+  unsigned cwidth;
+  unsigned cheight;
+  unsigned ascent;
 } GRFont;
 
 struct CFont {

@@ -16,7 +16,7 @@ bootmenu_sources := \
     default_bootmenu_ui.c \
     ui.c \
 
-BOOTMENU_VERSION:=1.2.0
+BOOTMENU_VERSION:=2.0.0
 
 # Variables available in BoardConfig.mk related to mount devices
 
@@ -47,6 +47,10 @@ endif
 # ics var used in vold too
 ifneq ($(TARGET_USE_CUSTOM_LUN_FILE_PATH),)
     EXTRA_CFLAGS += -DBOARD_UMS_LUNFILE="\"$(TARGET_USE_CUSTOM_LUN_FILE_PATH)\""
+else
+  ifneq ($(BOARD_MASS_STORAGE_FILE_PATH),)
+    EXTRA_CFLAGS += -DBOARD_UMS_LUNFILE="\"$(BOARD_MASS_STORAGE_FILE_PATH)\""
+  endif
 endif
 
 # one-shot reboot mode file location
@@ -69,7 +73,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := $(bootmenu_sources)
 
-BOOTMENU_SUFFIX := -ICS
+BOOTMENU_SUFFIX :=
 
 LOCAL_CFLAGS += \
     -DBOOTMENU_VERSION="\"${BOOTMENU_VERSION}${BOOTMENU_SUFFIX}\"" -DSTOCK_VERSION=0 \

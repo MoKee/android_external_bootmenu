@@ -378,9 +378,11 @@ show_menu_overclock(void) {
   int select = 0;
 
   if (title_headers == NULL) {
-    char* headers[] = { " #" MENU_SYSTEM MENU_OVERCLOCK,
-                        "",
-                        NULL };
+    char* headers[] = {
+      " #" MENU_SYSTEM MENU_OVERCLOCK,
+      "",
+      NULL 
+    };
     title_headers = prepend_title((const char**)headers);
   }
 
@@ -388,7 +390,7 @@ show_menu_overclock(void) {
   struct UiMenuItem items[29];
     items[0] = buildMenuItem(MENUITEM_SMALL, NULL, NULL);
     items[1] = buildMenuItem(MENUITEM_SMALL, NULL, NULL);
-  	items[2] = buildMenuItem(MENUITEM_SMALL, NULL, NULL);
+    items[2] = buildMenuItem(MENUITEM_SMALL, NULL, NULL);
     #define OC_MALLOC_FIRST 3
     items[3] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
     items[4] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
@@ -445,7 +447,7 @@ show_menu_overclock(void) {
 
       default: items[2].title = " Scaling: [Unknown]"; break;
     }
-    
+
     sprintf(items[3].title, "+Clk1: [%d]", get_overclock_value("clk1"));
     sprintf(items[4].title, "+Clk2: [%d]", get_overclock_value("clk2"));
     sprintf(items[5].title, "+Clk3: [%d]", get_overclock_value("clk3"));

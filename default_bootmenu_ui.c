@@ -44,35 +44,39 @@ int device_reboot_now(volatile char* key_pressed, int key_code) {
 
 // check for constants in bionic/libc/kernel/common/linux/input.h
 
-int device_handle_key(int key_code, int visible) {
-    if (visible) {
-        switch (key_code) {
-            case KEY_DOWN:
-            case KEY_VOLUMEDOWN:
-                return HIGHLIGHT_DOWN;
-
-            case KEY_UP:
-            case KEY_VOLUMEUP:
-                return HIGHLIGHT_UP;
-
-            case KEY_MENU:
-            case KEY_POWER:
-            case KEY_END:
-            case KEY_SEND:
-            case KEY_ENTER:
-            case KEY_MEDIA: /* headset button */
-                return SELECT_ITEM;
-
-            case KEY_BACKSPACE:
-            case KEY_BACK:
-                return ACTION_CANCEL;
-		
-			case KEY_SEARCH:
-				return ACTION_NEXTTAB;
-        }
+int device_handle_key(int key_code, int visible)
+{
+    if (!visible) {
+        return NO_ACTION;
     }
 
-    return NO_ACTION;
+    switch (key_code) {
+        case KEY_DOWN:
+        case KEY_VOLUMEDOWN:
+            return HIGHLIGHT_DOWN;
+
+        case KEY_UP:
+        case KEY_VOLUMEUP:
+            return HIGHLIGHT_UP;
+
+        case KEY_MENU:
+        case KEY_POWER:
+        case KEY_END:
+        case KEY_SEND:
+        case KEY_ENTER:
+        case KEY_MEDIA: /* headset button */
+            return SELECT_ITEM;
+
+        case KEY_BACKSPACE:
+        case KEY_BACK:
+            return ACTION_CANCEL;
+
+        case KEY_SEARCH:
+            return ACTION_NEXTTAB;
+
+        default:
+            return NO_ACTION;
+    }
 }
 
 int device_perform_action(int which) {

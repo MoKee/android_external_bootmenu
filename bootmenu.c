@@ -144,64 +144,62 @@ struct UiMenuResult get_menu_selection(char** headers, char** tabs, struct UiMen
     int action = 0;
 
     switch(eventresult.utype) {
-    	case UINPUTEVENT_TYPE_KEY:
-    		action = device_handle_key(eventresult.code, visible);
+      case UINPUTEVENT_TYPE_KEY:
+        action = device_handle_key(eventresult.code, visible);
 
-    		if (action < 0) {
-    			if(action==HIGHLIGHT_UP || action==HIGHLIGHT_DOWN || action==SELECT_ITEM) {
-    				if(is_menuSelection_enabled()!=1) {
-    					enableMenuSelection(1);
-    					break;
-    				}
-    			}
+        if (action < 0) {
+          if(action==HIGHLIGHT_UP || action==HIGHLIGHT_DOWN || action==SELECT_ITEM) {
+            if(is_menuSelection_enabled()!=1) {
+              enableMenuSelection(1);
+              break;
+            }
+          }
 
-				switch (action) {
-				  case HIGHLIGHT_UP:
-					--selected;
-					selected = ui_menu_select(selected);
-					break;
-				  case HIGHLIGHT_DOWN:
-					++selected;
-					selected = ui_menu_select(selected);
-					break;
-				  case SELECT_ITEM:
-					ret.result = selected;
-					ret.type = RESULT_LIST;
-					break;
-				  case ACTION_CANCEL:
-					ret.result = GO_BACK;
-					ret.type = RESULT_LIST;
-					break;
-				  case NO_ACTION:
-					break;
-				  case ACTION_NEXTTAB:
-					ret.result = ui_setTab_next();
-					ret.type = RESULT_TAB;
-					break;
-				}
-			} else if (!menu_only) {
-			  ret.result = action;
-			}
-    	break;
+          switch (action) {
+            case HIGHLIGHT_UP:
+              --selected;
+              selected = ui_menu_select(selected);
+              break;
+            case HIGHLIGHT_DOWN:
+              ++selected;
+              selected = ui_menu_select(selected);
+              break;
+            case SELECT_ITEM:
+              ret.result = selected;
+              ret.type = RESULT_LIST;
+              break;
+            case ACTION_CANCEL:
+              ret.result = GO_BACK;
+              ret.type = RESULT_LIST;
+              break;
+            case NO_ACTION:
+              break;
+            case ACTION_NEXTTAB:
+              ret.result = ui_setTab_next();
+              ret.type = RESULT_TAB;
+              break;
+          }
+        } else if (!menu_only) {
+          ret.result = action;
+        }
+        break;
 
-    	case UINPUTEVENT_TYPE_TOUCH_START:
-    	case UINPUTEVENT_TYPE_TOUCH_DRAG:
-    	case UINPUTEVENT_TYPE_TOUCH_RELEASE:
-    		enableMenuSelection(0);
-    		tret = ui_handle_touch(eventresult);
+      case UINPUTEVENT_TYPE_TOUCH_START:
+      case UINPUTEVENT_TYPE_TOUCH_DRAG:
+      case UINPUTEVENT_TYPE_TOUCH_RELEASE:
+        enableMenuSelection(0);
+        tret = ui_handle_touch(eventresult);
 
-    		switch(tret.type) {
-    			case TOUCHRESULT_TYPE_ONCLICK_LIST:
-    				ret.result = tret.item;
-    				ret.type = RESULT_LIST;
-    			break;
-    		}
-    	break;
-    }
-
+        switch(tret.type) {
+          case TOUCHRESULT_TYPE_ONCLICK_LIST:
+            ret.result = tret.item;
+            ret.type = RESULT_LIST;
+          break;
+        }
+        break;
+    } //switch
 
   }
-
   ui_end_menu();
 
   return ret;
@@ -260,7 +258,6 @@ static void prompt_and_wait() {
         __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_POWER_OFF, NULL);
         return;
       }
-
       select = menuret.result;
     }
   }
@@ -438,25 +435,41 @@ static int run_bootmenu(void) {
  *
  */
 int main(int argc, char **argv) {
+  int result;
 
-  // initialize ui
-  ui_init();
-  //ui_set_background(BACKGROUND_DEFAULT);
-  ui_show_text(ENABLE);
-  LOGI("Start Android BootMenu....\n");
-  ui_reset_progress();
-  
-  
-  main_headers = prepend_title((const char**)MENU_HEADERS);
- /* ui_start_menu(main_headers, TABS, MENU_ITEMS, 0);
-  ui_wait_key();
-  ui_end_menu();*/
-  
-  //get_menu_selection(main_headers, TABS, MENU_ITEMS, 0, 0);
-  prompt_and_wait();
-  free_menu_headers(main_headers);
-  
-  ui_finish();
+  if (argc == 2 && 0 == strcmp(argv[1], "postbootmenu")) {
+    exec_script(FILE_OVERCLOCK, DISABLE);
+    result = exec_script(FILE_POST_MENU, DISABLE);
+    bypass_sign("no");
+    sync();
+    return result;
+  }
+  else if (NULL != strstr(argv[0], "bootmenu")) {
+    fprintf(stdout, "Run BootMenu..\n");
+    result = run_bootmenu();
+    sync();
+    return result;
+  }
+  else if (argc >= 3 && 0 == strcmp(argv[2], "userdata")) {
+    result = run_bootmenu();
+    real_execute(argc, argv);
+    bypass_sign("no");
+    sync();
+    return result;
+  }
+  else if (argc >= 3 && 0 == strcmp(argv[2], "pds")) {
+    //kept for stock rom compatibility, please use postbootmenu
+    real_execute(argc, argv);
+    exec_script(FILE_OVERCLOCK, DISABLE);
+    result = exec_script(FILE_POST_MENU, DISABLE);
+    bypass_sign("no");
+    sync();
+    return result;
+  }
+  else {
+    return real_execute(argc, argv);
+  }
+
   return 0;
 }
 
