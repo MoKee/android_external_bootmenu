@@ -55,8 +55,9 @@ static int square_inner_right;
 static int square_inner_bottom;
 static int square_inner_left;
 
-#define REDRAWTHREAD_SLOW_FPS 15 /* idle state */
-#define REDRAWTHREAD_FAST_FPS 60 /* for slides */
+#define REDRAWTHREAD_SLOW_FPS 1  /* idle state */
+#define REDRAWTHREAD_FAST_FPS 60 /* max "fps", for slides */
+static int redraw_idle_timeout = 200; /* go to idle after N redraw loops */
 static pthread_mutex_t gUpdateMutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* Progress bar, background and other pngs */
@@ -301,13 +302,22 @@ static int draw_menu_item(int top, int item) {
 
 static void draw_log_line(int row, const char* t) {
   if (t[0] != '\0') {
-    gr_text(square_inner_left-3, square_inner_top+(square_inner_bottom-square_inner_top)+(row+1)*gr_getfont_cheight()-1, t);
+    int yL = square_inner_top+(square_inner_bottom-square_inner_top)+(row+1)*gr_getfont_cheight()-1;
+    gr_text(square_inner_left-3, yL, t);
+    gr_drawLine(square_inner_left-3, yL, gr_fb_width(), yL, 4);
+  }
+}
+
+static void draw_text_line(int row, const char* t) {
+  if (t[0] != '\0') {
+    gr_text(0, (row+1)*gr_getfont_cwidth()-1, t);
   }
 }
 
 static int ui_get_menu_top() {
   return STATUSBAR_HEIGHT+TABCONTROL_HEIGHT+menutop_diff;
 }
+
 static int ui_get_menu_height() {
   int i;
   int height = 0;
@@ -357,6 +367,10 @@ static void draw_screen_locked(void)
 
   if (show_text) {
     i = 0;
+
+    // for logs, no menu items
+    if (activeTab == 2) show_menu = false;
+
     if (show_menu) {
       // draw menu
       gr_setfont(FONT_ITEM);
@@ -374,12 +388,8 @@ static void draw_screen_locked(void)
       ++i;
     }
 
-    // draw log
+    // small font for status bar
     gr_setfont(FONT_LOGS);
-    gr_color(255, 255, 0, 255);
-    for (i=0; i < text_rows; ++i) {
-        draw_log_line(i, text[(i+text_top) % text_rows]);
-    }
 
     // draw statusbar
     int statusbar_right = 10;
@@ -387,17 +397,19 @@ static void draw_screen_locked(void)
     gr_fill(0, 0, gr_fb_width(), STATUSBAR_HEIGHT);
 
     // print version
-    int yBar = gr_getfont_cheight()/2+STATUSBAR_HEIGHT/2-gr_getfont_cheightfix();
+    int yBar = gr_getfont_cheight()/2 + STATUSBAR_HEIGHT/2 - gr_getfont_cheightfix();
     gr_color(0, 170, 255, 255);
     gr_text(0, yBar, "Bootmenu v" BOOTMENU_VERSION);
 
     // draw clock
     char time[16];
     ui_get_time(time);
+    if (redraw_idle_timeout)
+      sprintf(time, "%s %d", time, redraw_idle_timeout);
     gr_color(0, 170, 255, 255);
     gr_text(gr_fb_width()/2 + 5*gr_getfont_cwidth()/2, yBar, time);
 
-    #ifdef BOARD_WITH_CPCAP
+#ifdef BOARD_WITH_CPCAP
     // draw battery
     int level = battery_level();
     char level_s[5];
@@ -408,12 +420,14 @@ static void draw_screen_locked(void)
     for(level_s_size=0; level_s[level_s_size]; ++level_s_size) {}
 
     gr_text(gr_fb_width()-level_s_size*gr_getfont_cwidth()-statusbar_right, yBar, level_s);
-    #endif
+#endif
 
     // draw tabcontrol
     int tableft=0;
+
     gr_setfont(FONT_HEAD);
     gr_color(0, 0, 0, 255);
+
     gr_fill(0, STATUSBAR_HEIGHT, gr_fb_width(), STATUSBAR_HEIGHT+TABCONTROL_HEIGHT);
     if(tabitems!=NULL) {
       for(i=0; tabitems[i]; ++i) {
@@ -426,6 +440,19 @@ static void draw_screen_locked(void)
     // draw divider-line
     gr_color(0, 170, 255, 255);
     gr_drawLine(0, STATUSBAR_HEIGHT+TABCONTROL_HEIGHT, gr_fb_width(), STATUSBAR_HEIGHT+TABCONTROL_HEIGHT, 4);
+
+    // draw logs
+    if (activeTab == 2) {
+
+      gr_setfont(FONT_LOGS);
+      gr_color(192, 192, 192, 255);
+
+      for (i=0; i < text_rows; ++i) {
+        draw_log_line(i, text[(i+text_top) % text_rows]);
+        //gr_text(0, yBar*i, text[(i+text_top) % text_rows]);
+        //draw_text_line(i, text[(i+text_top) % text_rows]);
+      }
+    }
 
     // DEBUG: Pointer-location
     gr_color(255, 0, 0, 255);
@@ -608,6 +635,7 @@ static void *input_thread(void *cookie)
         // key-up), so don't record them in the key_pressed
         // table.
         key_pressed[ev.code] = ev.value;
+        redraw_idle_timeout = 50;
     }
     fake_key = 0;
     const int queue_max = sizeof(key_queue) / sizeof(key_queue[0]);
@@ -618,10 +646,12 @@ static void *input_thread(void *cookie)
     pthread_mutex_unlock(&key_queue_mutex);
 
     if (ev.type!= EV_ABS && ev.value > 0 && device_toggle_display(key_pressed, ev.code)) {
-        pthread_mutex_lock(&gUpdateMutex);
-        show_text = !show_text;
-        //update_screen_locked();
-        pthread_mutex_unlock(&gUpdateMutex);
+        ui_setTab_next();
+        //pthread_mutex_lock(&gUpdateMutex);
+        //int tab = ui_get_activeTab();
+        // show_text = (tab != 2);
+        // update_screen_locked();
+        //pthread_mutex_unlock(&gUpdateMutex);
     }
 
     if (ev.value > 0 && device_reboot_now(key_pressed, ev.code)) {
@@ -636,15 +666,27 @@ static void *input_thread(void *cookie)
 }
 
 /**
- * TODO: REDRAWTHREAD_IDLE_FPS when finger doesnt touch the screen.
+ * Refresh the ui
+ *
+ * Note: use "idle" REDRAWTHREAD_SLOW_FPS when finger doesnt touch the screen.
  */
 static void *redraw_thread(void *cookie)
 {
   bool bNeedExit = false;
+  int sleep_time = 10000;
+  int counter = 0;
+
   while (!bNeedExit) {
-    usleep(1000000 / REDRAWTHREAD_FAST_FPS);
+    usleep(sleep_time);
     pthread_mutex_lock(&gUpdateMutex);
-    update_screen_locked();
+    sleep_time = 1000000 / (redraw_idle_timeout > 0 ? REDRAWTHREAD_FAST_FPS : (REDRAWTHREAD_SLOW_FPS*10));
+    counter = (counter+1) % 5;
+    // skip 4/5 of the "slow" redraw work in idle state, to reduce the maximum wait on exit from idle
+    if ((redraw_idle_timeout || !counter)) {
+      update_screen_locked();
+      redraw_idle_timeout-=10;
+      if (redraw_idle_timeout < 0) redraw_idle_timeout = 0;
+    }
     bNeedExit = (t_redraw == 0);
     pthread_mutex_unlock(&gUpdateMutex);
   }
@@ -656,15 +698,15 @@ int ui_create_bitmaps()
   int i, result=0;
 
   for (i = 0; BITMAPS[i].name != NULL; ++i) {
-      result = res_create_surface(BITMAPS[i].name, BITMAPS[i].surface);
-      if (result < 0) {
-          if (result == -2) {
-              LOGI("Bitmap %s missing header\n", BITMAPS[i].name);
-          } else {
-              LOGE("Missing bitmap %s\n(Code %d)\n", BITMAPS[i].name, result);
-          }
-          *BITMAPS[i].surface = NULL;
+    result = res_create_surface(BITMAPS[i].name, BITMAPS[i].surface);
+    if (result < 0) {
+      if (result == -2) {
+        LOGI("Bitmap %s missing header\n", BITMAPS[i].name);
+      } else {
+        LOGE("Missing bitmap %s\n(Code %d)\n", BITMAPS[i].name, result);
       }
+      *BITMAPS[i].surface = NULL;
+    }
   }
   return result;
 }
@@ -824,10 +866,16 @@ void ui_reset_progress()
 }
 
 void ui_print_str(char *str) {
-  char buf[256];
+  char buf[256]="";
 
-  strncpy(buf, str, 255);
+  snprintf(buf, 255, "%s", str);
   fputs(buf, stdout);
+
+  // safety..
+  if (text_rows >= MAX_ROWS)
+    text_rows = MAX_ROWS-1;
+  if (text_cols >= MAX_COLS)
+    text_cols = MAX_COLS-1;
 
   // This can get called before ui_init(), so be careful.
   pthread_mutex_lock(&gUpdateMutex);
@@ -993,24 +1041,20 @@ void ui_set_activeTab(int i)
   pthread_mutex_unlock(&gUpdateMutex);
 }
 
-int ui_get_activeTab()
+int ui_get_activeTab(void)
 {
   return activeTab;
 }
 
 int ui_setTab_next() {
-  int i;
+  int cnt;
   pthread_mutex_lock(&gUpdateMutex);
   // count tabs
-  for(i=0; tabitems[i]; i++){}
+  for(cnt=0; tabitems[cnt]; cnt++){}
 
   // set next tab as active tab
-  if(activeTab>=i-1) {
-    activeTab=0;
-  }
-  else {
-    activeTab++;
-  }
+  activeTab = (activeTab + 1) % cnt;
+
   pthread_mutex_unlock(&gUpdateMutex);
   return activeTab;
 }
@@ -1039,11 +1083,11 @@ int ui_inside_menuitem(int item, int x, int y) {
 /* Return 1 if the difference is negative, otherwise 0.  */
 int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval *t1)
 {
-    long int diff = (t2->tv_usec + 1000000 * t2->tv_sec) - (t1->tv_usec + 1000000 * t1->tv_sec);
-    result->tv_sec = diff / 1000000;
-    result->tv_usec = diff % 1000000;
+  long int diff = (t2->tv_usec + 1000000 * t2->tv_sec) - (t1->tv_usec + 1000000 * t1->tv_sec);
+  result->tv_sec = diff / 1000000;
+  result->tv_usec = diff % 1000000;
 
-    return (diff<0);
+  return (diff<0);
 }
 
 struct ui_touchresult ui_handle_touch(struct ui_input_event uev) {
@@ -1051,9 +1095,12 @@ struct ui_touchresult ui_handle_touch(struct ui_input_event uev) {
   int clickedItem=-1;
   struct ui_touchresult ret = {TOUCHRESULT_TYPE_EMPTY,-1};
   struct timeval tvNow, tvDiff;
+
   pthread_mutex_lock(&gUpdateMutex);
   switch(uev.utype) {
     case UINPUTEVENT_TYPE_TOUCH_START:
+
+      redraw_idle_timeout = 100;
 
       if(enable_scrolling==1) break;
 
@@ -1073,6 +1120,8 @@ struct ui_touchresult ui_handle_touch(struct ui_input_event uev) {
     break;
 
     case UINPUTEVENT_TYPE_TOUCH_DRAG:
+
+      redraw_idle_timeout = 100;
 
       // calculate difference to start-time
       gettimeofday(&tvNow, NULL);
@@ -1099,6 +1148,7 @@ struct ui_touchresult ui_handle_touch(struct ui_input_event uev) {
           ret.type = TOUCHRESULT_TYPE_ONCLICK_LIST;
           ret.item = i;
           vibrate(VIBRATOR_HARD_MS); /* big vibration on release */
+          redraw_idle_timeout = 50;
           break;
         }
       }
@@ -1121,6 +1171,9 @@ struct ui_touchresult ui_handle_touch(struct ui_input_event uev) {
           enable_bounceback=1;
         }
       }
+
+      // idle later on bounce back
+      if (enable_bounceback) redraw_idle_timeout += 50;
 
       pointerx_start = pointerx = -1;
       pointery_start = pointery = -1;

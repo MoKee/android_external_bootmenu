@@ -101,6 +101,10 @@ void ui_end_menu();
 
 struct UiMenuItem buildMenuItem(int type, char *title, char *description);
 
+// Tabs funcs
+void ui_set_activeTab(int);
+int ui_get_activeTab(void);
+
 // Set the icon (normally the only thing visible besides the progress bar).
 enum {
   BACKGROUND_ICON_NONE,

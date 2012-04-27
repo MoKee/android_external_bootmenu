@@ -125,20 +125,6 @@ struct UiMenuResult get_menu_selection(char** headers, char** tabs, struct UiMen
 
   while (ret.result < 0) {
 
-#ifdef BOARD_WITH_CPCAP
-    /*int level = battery_level();
-    if (level > 0) {
-      if ((50 * progress_value) != level / 2) {
-          progress_value = level / 100.0;
-          if (level < 20)
-             ui_print("Low battery ! %3d %%\n", level);
-          ui_reset_progress();
-          ui_show_progress(progress_value, 1);
-          ui_set_progress(1.0);
-      }
-    }*/
-#endif
-
     struct ui_input_event eventresult;
     int visible = ui_text_visible();
     int action = 0;
@@ -199,6 +185,7 @@ struct UiMenuResult get_menu_selection(char** headers, char** tabs, struct UiMen
           break;
         }
         break;
+
     } //switch
 
   }
