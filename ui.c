@@ -407,7 +407,7 @@ static void draw_screen_locked(void)
     if (redraw_idle_timeout)
       sprintf(time, "%s %d", time, redraw_idle_timeout);
     gr_color(0, 170, 255, 255);
-    gr_text(gr_fb_width()/2 + 5*gr_getfont_cwidth()/2, yBar, time);
+    gr_text(gr_fb_width()/2 - 5*gr_getfont_cwidth()/2, yBar, time);
 
 #ifdef BOARD_WITH_CPCAP
     // draw battery
