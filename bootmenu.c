@@ -460,10 +460,17 @@ int main(int argc, char **argv) {
 
     /* Direct UI, without key test */
 
+#ifndef UNLOCKED_DEVICE
     fprintf(stdout, "Run BootMenu..\n");
     exec_script(FILE_PRE_MENU, DISABLE);
     int mode = get_bootmode(0,0);
     result = run_bootmenu_ui(mode);
+#else
+    // unlocked devices can exec bootmenu directly in init.rc
+    result = run_bootmenu();
+    bypass_sign("no");
+#endif
+
     sync();
     return result;
   }
