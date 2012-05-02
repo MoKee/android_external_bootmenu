@@ -368,10 +368,10 @@ static void draw_screen_locked(void)
   if (show_text) {
     i = 0;
 
-    // for logs, no menu items
-    if (activeTab == 2) show_menu = false;
+    // for logs, no menu items (define to move later)
+    #define TAB_LOG 2
 
-    if (show_menu) {
+    if (activeTab != TAB_LOG) {
       // draw menu
       gr_setfont(FONT_ITEM);
 
@@ -402,10 +402,15 @@ static void draw_screen_locked(void)
     gr_text(0, yBar, "Bootmenu v" BOOTMENU_VERSION);
 
     // draw clock
-    char time[16];
+    char time[24];
     ui_get_time(time);
-    if (redraw_idle_timeout)
-      sprintf(time, "%s %d", time, redraw_idle_timeout);
+
+    // add usb status
+    sprintf(time, "%s       %s%s", time,
+      usb_connected() ? "usb":"",
+      adb_started() ? "-d":""
+    );
+
     gr_color(0, 170, 255, 255);
     gr_text(gr_fb_width()/2 - 5*gr_getfont_cwidth()/2, yBar, time);
 
@@ -679,7 +684,7 @@ static void *redraw_thread(void *cookie)
   while (!bNeedExit) {
     usleep(sleep_time);
     pthread_mutex_lock(&gUpdateMutex);
-    sleep_time = 1000000 / (redraw_idle_timeout > 0 ? REDRAWTHREAD_FAST_FPS : (REDRAWTHREAD_SLOW_FPS*10));
+    sleep_time = 1000000 / (redraw_idle_timeout > 0 ? REDRAWTHREAD_FAST_FPS : (REDRAWTHREAD_SLOW_FPS*5));
     counter = (counter+1) % 5;
     // skip 4/5 of the "slow" redraw work in idle state, to reduce the maximum wait on exit from idle
     if ((redraw_idle_timeout || !counter)) {
@@ -1049,6 +1054,7 @@ int ui_get_activeTab(void)
 int ui_setTab_next() {
   int cnt;
   pthread_mutex_lock(&gUpdateMutex);
+
   // count tabs
   for(cnt=0; tabitems[cnt]; cnt++){}
 
