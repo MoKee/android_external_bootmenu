@@ -79,4 +79,7 @@ if [ -x /system/bootmenu/script/overclock.sh ]; then
     /system/bootmenu/script/overclock.sh safe
 fi
 
+# must be restored in stock.sh
+[ -L /tmp ] && mv /tmp /tmp.bak
+
 exit 0

@@ -27,6 +27,11 @@ umount /data
 
 ######## Cleanup
 
+# original /tmp data symlink
+if [ -L /tmp.bak ]; then
+  rm /tmp.bak
+fi
+
 rm -f /sbin/lsof
 
 ## busybox cleanup..

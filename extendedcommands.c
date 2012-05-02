@@ -60,6 +60,7 @@ const char* modes[] = {
 #define LABEL_TOGGLE_ADB "ADB :"
 
 static bool boot_with_adb = false;
+static int adbd_ready = 0;
 
 /**
  * int_mode()
@@ -1110,12 +1111,33 @@ int usb_connected() {
 }
 
 int adb_started() {
-  int res=0;
-  FILE* f;
+  int res = 0;
 
+  #ifndef FILE_ADB_STATE
+  #define FILE_ADB_STATE "/tmp/usbd_current_state"
+  #endif
 
+  FILE* f = fopen(FILE_ADB_STATE, "r");
+  if (f != NULL) {
+    char mode[32] = "";
+    fscanf(f, "%s", mode);
+    res = (0 == strcmp("usb_mode_charge_adb", mode));
+    fclose(f);
+  }
 
-  return res;
+  bool con = usb_connected();
+  if (con && res) {
+    adbd_ready = true;
+  } else {
+    // must be restarted, if usb was disconnected
+    adbd_ready = false;
+    f = fopen(FILE_ADB_STATE, "w");
+    fprintf(f, "");
+    fflush(f);
+    fclose(f);
+  }
+
+  return adbd_ready;
 }
 
 /**
