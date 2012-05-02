@@ -143,6 +143,10 @@ static int vk_init(struct ev *e)
     {
         e->ignored = 1;
     }
+    if (strcmp(e->deviceName, "accelerometer") == 0)
+    {
+        e->ignored = 1;
+    }
 
     strcat(vk_path, e->deviceName);
 
