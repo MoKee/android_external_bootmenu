@@ -5,8 +5,8 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := main.c reboot.c
+LOCAL_CFLAGS := -DSINGLE_APPLET=1
 
-LOCAL_C_INCLUDES +=
 LOCAL_MODULE := reboot_bm
 LOCAL_MODULE_STEM := reboot
 LOCAL_MODULE_TAGS := optional
