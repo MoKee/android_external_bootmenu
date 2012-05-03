@@ -101,6 +101,8 @@ int file_exists(char * file);
 
 int snd_exec_script(const char* filename, int ui);
 
+int log_dumpfile(char * file);
+
 int set_usb_device_mode(const char *mode);
 int mount_usb_storage(const char *part);
 

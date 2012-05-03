@@ -386,6 +386,13 @@ static void draw_screen_locked(void)
         }
       }
       ++i;
+
+    } else {
+
+      //log background
+      gr_color(50, 50, 50, 160);
+      gr_fill(0, 0, gr_fb_width(), gr_fb_height());
+
     }
 
     // small font for status bar
@@ -407,7 +414,7 @@ static void draw_screen_locked(void)
     gr_text(gr_fb_width()/2 - 5*gr_getfont_cwidth()/2, yBar, str);
 
     ui_get_usbstate(str);
-    gr_text(gr_fb_width()/8 * 5, yBar, str);
+    gr_text(gr_fb_width()/4 * 3, yBar, str);
 
 #ifdef BOARD_WITH_CPCAP
     // draw battery
@@ -437,16 +444,35 @@ static void draw_screen_locked(void)
     gr_drawLine(0, STATUSBAR_HEIGHT+TABCONTROL_HEIGHT, gr_fb_width(), STATUSBAR_HEIGHT+TABCONTROL_HEIGHT, 4);
 
     // draw logs
-    if (activeTab == 2) {
+    gr_setfont(FONT_LOGS);
+    gr_color(192, 192, 192, 255);
 
-      gr_setfont(FONT_LOGS);
-      gr_color(192, 192, 192, 255);
+    if (activeTab == TAB_LOG) {
 
+      int row;
+      int ln_h = gr_getfont_cheight();
+      int full_rows = (gr_fb_height() - (STATUSBAR_HEIGHT+TABCONTROL_HEIGHT) - 24) / ln_h;
+
+      sprintf(str, "%d rows", full_rows);
+      gr_text(400, STATUSBAR_HEIGHT+TABCONTROL_HEIGHT + 22, str);
+
+      for (i=0; i < full_rows; ++i) {
+        row = (i+text_top) % full_rows;
+        if (row >= MAX_ROWS) break;
+        if (strlen(text[row]))
+          gr_text(2, STATUSBAR_HEIGHT+TABCONTROL_HEIGHT + 22 + ln_h*i, text[row]);
+        else {
+          sprintf(str, "%d (%d) empty", i, row);
+        }
+      }
+
+    } else {
+
+      // tailed log on the bottom
       for (i=0; i < text_rows; ++i) {
         draw_log_line(i, text[(i+text_top) % text_rows]);
-        //gr_text(0, yBar*i, text[(i+text_top) % text_rows]);
-        //draw_text_line(i, text[(i+text_top) % text_rows]);
       }
+
     }
 
     // DEBUG: Pointer-location

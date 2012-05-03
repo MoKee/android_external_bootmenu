@@ -327,6 +327,9 @@ static int run_bootmenu_ui(int mode) {
   checkup_report();
   //ui_reset_progress();
 
+  //test: fill the log
+  log_dumpfile("/proc/cpuinfo");
+
   prompt_and_wait();
   free_menu_headers(main_headers);
 
