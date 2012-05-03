@@ -402,29 +402,19 @@ static void draw_screen_locked(void)
     gr_text(0, yBar, "Bootmenu v" BOOTMENU_VERSION);
 
     // draw clock
-    char time[24];
-    ui_get_time(time);
+    char str[16]="";
+    ui_get_time(str);
+    gr_text(gr_fb_width()/2 - 5*gr_getfont_cwidth()/2, yBar, str);
 
-    // add usb status
-    sprintf(time, "%s       %s%s", time,
-      usb_connected() ? "usb":"",
-      adb_started() ? "-d":""
-    );
-
-    gr_color(0, 170, 255, 255);
-    gr_text(gr_fb_width()/2 - 5*gr_getfont_cwidth()/2, yBar, time);
+    ui_get_usbstate(str);
+    gr_text(gr_fb_width()/8 * 5, yBar, str);
 
 #ifdef BOARD_WITH_CPCAP
     // draw battery
     int level = battery_level();
-    char level_s[5];
-    sprintf(level_s, "%d%%", level);
+    sprintf(str, "%d%%", level);
 
-    // count size of string */
-    int level_s_size;
-    for(level_s_size=0; level_s[level_s_size]; ++level_s_size) {}
-
-    gr_text(gr_fb_width()-level_s_size*gr_getfont_cwidth()-statusbar_right, yBar, level_s);
+    gr_text(gr_fb_width() - strlen(str)*gr_getfont_cwidth() - statusbar_right, yBar, str);
 #endif
 
     // draw tabcontrol
@@ -1037,6 +1027,15 @@ void ui_get_time(char* result)
   timeinfo = localtime(&rawtime);
 
   strftime(result, 8, "%H:%M", timeinfo);
+}
+
+void ui_get_usbstate(char* result)
+{
+  // add usb status
+  sprintf(result, "%s%s",
+    usb_connected() ? "usb":"",
+    adb_started() ? "-d":""
+  );
 }
 
 void ui_set_activeTab(int i)

@@ -83,6 +83,7 @@ void free_menu_headers(char** headers);
 struct UiMenuResult get_menu_selection(char** headers, char** tabs, struct UiMenuItem* items, int menu_only, int initial_selection);
 static void recalcSquare();
 void ui_get_time(char* result);
+void ui_get_usbstate(char* result);
 static int drawTab(int left, const char* s, int active);
 void ui_set_activeTab(int i);
 int ui_setTab_next();

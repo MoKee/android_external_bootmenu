@@ -1132,9 +1132,11 @@ int adb_started() {
     // must be restarted, if usb was disconnected
     adbd_ready = false;
     f = fopen(FILE_ADB_STATE, "w");
-    fprintf(f, "");
-    fflush(f);
-    fclose(f);
+    if (f != NULL) {
+      fprintf(f, "\n");
+      fflush(f);
+      fclose(f);
+    }
   }
 
   return adbd_ready;
