@@ -111,5 +111,5 @@ struct UiFont {
 int vibrate(int timeout_ms);
 
 #define VIBRATOR_TIME_MS        22
-#define VIBRATOR_HARD_MS        41
+#define VIBRATOR_HARD_MS        32
 
