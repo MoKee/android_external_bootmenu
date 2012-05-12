@@ -602,12 +602,14 @@ int snd_init(int ui) {
   else
     LOGI("Start " LABEL_2NDINIT " boot....\n");
 
+  ui_stop_redraw();
 #ifdef USE_DUALCORE_DIRTY_HACK
     if(!ui)
       status = snd_exec_script(FILE_2NDINIT, ui);
     else
 #endif
       status = exec_script(FILE_2NDINIT, ui);
+  ui_resume_redraw();
 
   if (status) {
     return -1;
@@ -647,12 +649,14 @@ int snd_boot(int ui) {
   else
     LOGI("Start " LABEL_2NDBOOT " boot....\n");
 
+  ui_stop_redraw();
 #ifdef USE_DUALCORE_DIRTY_HACK
     if(!ui)
       status = snd_exec_script(FILE_2NDBOOT, ui);
     else
 #endif
       status = exec_script(FILE_2NDBOOT, ui);
+  ui_resume_redraw();
 
   if (status) {
     bypass_sign("no");
@@ -692,12 +696,14 @@ int snd_system(int ui) {
   else
     LOGI("Start " LABEL_2NDSYSTEM " boot....\n");
 
+  ui_stop_redraw();
 #ifdef USE_DUALCORE_DIRTY_HACK
     if(!ui)
       status = snd_exec_script(FILE_2NDSYSTEM, ui);
     else
 #endif
       status = exec_script(FILE_2NDSYSTEM, ui);
+  ui_resume_redraw();
 
   if (status) {
     bypass_sign("no");
