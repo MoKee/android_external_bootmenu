@@ -623,7 +623,7 @@ show_menu_overclock(void) {
       case OVERCLOCK_bst_awake_ideal_freq:
         set_overclock_value("bst_awake_ideal_freq", menu_set_value("bst_awake_ideal_freq", get_overclock_value("bst_awake_ideal_freq"), 100000, 1200000, 10000)); break;
       case OVERCLOCK_bst_debug_mask:
-        set_overclock_value("bst_debug_mask", menu_set_value("bst_debug_mask", get_overclock_value("bst_debug_mask"), 0, 2, 1)); break;
+        set_overclock_value("bst_debug_mask", menu_set_value("bst_debug_mask", get_overclock_value("bst_debug_mask"), 0, 0xF, 1)); break;
       case OVERCLOCK_bst_down_rate_us:
         set_overclock_value("bst_down_rate_us", menu_set_value("bst_down_rate_us", get_overclock_value("bst_down_rate_us"), 50000, 200000, 5000)); break;
       case OVERCLOCK_bst_max_cpu_load:
