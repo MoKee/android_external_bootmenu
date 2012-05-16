@@ -23,8 +23,6 @@
 #include "minui/minui.h"
 #include "bootmenu_ui.h"
 
-#undef USE_4_CLOCK_LEVELS
-
 struct overclock_config
 {
  const char *name;
@@ -68,6 +66,7 @@ struct overclock_config overclock[] = {
   { "bst_sleep_ideal_freq", 200000 },
   { "bst_sleep_wakeup_freq", 300000 },
   { "bst_up_rate_us", 52000 },
+  { "iosched_sio", 0 },
   { NULL, 0 },
 };
 
@@ -406,12 +405,14 @@ show_menu_overclock(void) {
 #define OVERCLOCK_bst_sleep_wakeup_freq   34
 #define OVERCLOCK_bst_up_rate_us          35
 
-#define OVERCLOCK_DEFAULT                 36
-#define OVERCLOCK_SAVE                    37
-#define OVERCLOCK_GOBACK                  38
+#define OVERCLOCK_iosched_sio             36
+
+#define OVERCLOCK_DEFAULT                 37
+#define OVERCLOCK_SAVE                    38
+#define OVERCLOCK_GOBACK                  39
 
   static char** title_headers = NULL;
-  int select = 0;
+  int i, select = 0;
 
   if (title_headers == NULL) {
     char* headers[] = {
@@ -423,50 +424,22 @@ show_menu_overclock(void) {
   }
 
   get_overclock_config();
-  struct UiMenuItem items[40];
-    items[0] = buildMenuItem(MENUITEM_SMALL, NULL, NULL);
-    items[1] = buildMenuItem(MENUITEM_SMALL, NULL, NULL);
-    items[2] = buildMenuItem(MENUITEM_SMALL, NULL, NULL);
-    #define OC_MALLOC_FIRST 3
-    items[3] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[4] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[5] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[6] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[7] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[8] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[9] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[10] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[11] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[12] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[13] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[14] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[15] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[16] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[17] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[18] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[19] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[20] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[21] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[22] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[23] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[24] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[25] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[26] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[27] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[28] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[29] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[30] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[31] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[32] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[33] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[34] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
-    items[35] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*64), NULL);
+  struct UiMenuItem items[41];
 
-    #define OC_MALLOC_LAST 35
-    items[36] = buildMenuItem(MENUITEM_SMALL, "Set defaults(*req reboot/don't save!!)", NULL);
-    items[37] = buildMenuItem(MENUITEM_SMALL, "Save", NULL);
-    items[38] = buildMenuItem(MENUITEM_SMALL, "<--Go Back", NULL);
-    items[39] = buildMenuItem(MENUITEM_NULL, NULL, NULL);
+  items[0] = buildMenuItem(MENUITEM_SMALL, NULL, NULL);
+  items[1] = buildMenuItem(MENUITEM_SMALL, NULL, NULL);
+  items[2] = buildMenuItem(MENUITEM_SMALL, NULL, NULL);
+
+  #define OC_MALLOC_FIRST 3
+  #define OC_MALLOC_LAST  36
+  for (i = OC_MALLOC_FIRST; i <= OC_MALLOC_LAST; i++) {
+    items[i] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*48), NULL);
+  }
+
+  items[37] = buildMenuItem(MENUITEM_SMALL, "Set defaults(*req reboot/don't save!!)", NULL);
+  items[38] = buildMenuItem(MENUITEM_SMALL, "Save", NULL);
+  items[39] = buildMenuItem(MENUITEM_SMALL, "<--Go Back", NULL);
+  items[40] = buildMenuItem(MENUITEM_NULL, NULL, NULL);
 
   for (;;) {
 
@@ -501,8 +474,8 @@ show_menu_overclock(void) {
     sprintf(items[4].title, "+Clk2: [%d]", get_overclock_value("clk2"));
     sprintf(items[5].title, "+Clk3: [%d]", get_overclock_value("clk3"));
 #ifdef USE_4_CLOCK_LEVELS
-    sprintf(items[6].title, "+Clk4: [%d] (*req 2.3.3 kernel)", get_overclock_value("clk4"));
-    sprintf(items[10].title, "+Vsel4: [%d] (*req 2.3.3 kernel)", get_overclock_value("vsel4"));
+    sprintf(items[6].title, "+Clk4: [%d] *gb kernel", get_overclock_value("clk4"));
+    sprintf(items[10].title, "+Vsel4: [%d] *gb kernel", get_overclock_value("vsel4"));
 #else
     strcpy(items[6].title, "  ----------------------");
     strcpy(items[10].title, "  ----------------------");
@@ -538,6 +511,8 @@ show_menu_overclock(void) {
     sprintf(items[33].title, "+bst_sleep_ideal_freq: [%d]", get_overclock_value("bst_sleep_ideal_freq"));
     sprintf(items[34].title, "+bst_sleep_wakeup_freq: [%d]", get_overclock_value("bst_sleep_wakeup_freq"));
     sprintf(items[35].title, "+bst_up_rate_us: [%d]", get_overclock_value("bst_up_rate_us"));
+
+    sprintf(items[36].title, "+iosched_sio: [%d]", get_overclock_value("iosched_sio"));
 
     struct UiMenuResult ret = get_menu_selection(title_headers, TABS, items, 1, select);
 
@@ -642,6 +617,9 @@ show_menu_overclock(void) {
         set_overclock_value("bst_sleep_wakeup_freq", menu_set_value("bst_sleep_wakeup_freq", get_overclock_value("bst_sleep_wakeup_freq"), 300000, 1200000, 1000)); break;
       case OVERCLOCK_bst_up_rate_us:
         set_overclock_value("bst_up_rate_us", menu_set_value("bst_up_rate_us", get_overclock_value("bst_up_rate_us"), 20000, 500000, 1000)); break;
+
+      case  OVERCLOCK_iosched_sio:
+        set_overclock_value("iosched_sio", menu_set_value("iosched_sio", get_overclock_value("iosched_sio"), 0, 1, 1)); break;
 
       case OVERCLOCK_SAVE:
         ui_print("Saving.... ");

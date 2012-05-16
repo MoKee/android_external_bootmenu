@@ -63,6 +63,10 @@ ifeq ($(TARGET_BOOTLOADER_BOARD_NAME),olympus)
     EXTRA_CFLAGS += -DUNLOCKED_DEVICE -DNO_OVERCLOCK
 endif
 
+ifneq ($(BOARD_DEFY_MODEL),DEFY_FROYO)
+    EXTRA_CFLAGS += -DUSE_4_CLOCK_LEVELS
+endif
+
 ######################################
 # Cyanogen version
 
