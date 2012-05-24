@@ -16,7 +16,7 @@ bootmenu_sources := \
     default_bootmenu_ui.c \
     ui.c \
 
-BOOTMENU_VERSION:=2.0.0
+BOOTMENU_VERSION:=2.0-beta
 
 # Variables available in BoardConfig.mk related to mount devices
 
@@ -84,7 +84,8 @@ LOCAL_CFLAGS += \
     -DMAX_ROWS=44 -DMAX_COLS=96 ${EXTRA_CFLAGS}
 
 LOCAL_STATIC_LIBRARIES := libminui_bm libpixelflinger_static libpng libz
-LOCAL_STATIC_LIBRARIES += libstdc++ libc libcutils libm
+LOCAL_STATIC_LIBRARIES += libstdc++ libc libcutils
+#LOCAL_STATIC_LIBRARIES += libm
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
@@ -115,7 +116,8 @@ LOCAL_CFLAGS := \
     -DMAX_ROWS=44 -DMAX_COLS=96 ${EXTRA_CFLAGS}
 
 LOCAL_STATIC_LIBRARIES := libminui_bm libpixelflinger_static libpng libz
-LOCAL_STATIC_LIBRARIES += libstdc++ libc libcutils libm
+LOCAL_STATIC_LIBRARIES += libstdc++ libc libcutils
+#LOCAL_STATIC_LIBRARIES += libm
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 

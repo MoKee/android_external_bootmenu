@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <stdint.h>
-#include <math.h>
+//#include <math.h>
 
 #include "common.h"
 #include "minui/minui.h"
@@ -346,7 +346,8 @@ static void draw_screen_locked(void)
     int t0 = BOUNCEBACK_TIME*1000;
     int t1 = t0- (bouncediff.tv_sec*1000000+bouncediff.tv_usec);
     int way = abs(bounceback_start-bounceback_targetpos);
-    int pway = round((double)way/t0*t1);
+    //int pway = round((double)way/t0*t1);
+    int pway = way/t0*t1;
 
     if(pway<=0) {
       enable_bounceback=0;
