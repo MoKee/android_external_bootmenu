@@ -20,6 +20,10 @@
 #include <stdbool.h>
 #include <pixelflinger/pixelflinger.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void* gr_surface;
 typedef unsigned short gr_pixel;
 
@@ -78,8 +82,6 @@ void res_free_surface(gr_surface* pSurface);
 
 int gr_fb_test(void);
 
-#endif
-
 typedef struct {
   GGLSurface texture;
   unsigned cwidth;
@@ -113,3 +115,8 @@ int vibrate(int timeout_ms);
 #define VIBRATOR_TIME_MS        22
 #define VIBRATOR_HARD_MS        32
 
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _MINUI_H_ */
