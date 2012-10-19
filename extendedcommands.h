@@ -33,6 +33,7 @@ static const char *FILE_POST_MENU = BM_ROOTDIR "/script/post_bootmenu.sh";
 
 static const char *FILE_2NDINIT   = BM_ROOTDIR "/script/2nd-init.sh";
 static const char *FILE_2NDBOOT   = BM_ROOTDIR "/script/2nd-boot.sh";
+static const char *FILE_2NDBOOT_UART   = BM_ROOTDIR "/script/2nd-boot-uart.sh";
 static const char *FILE_2NDSYSTEM = BM_ROOTDIR "/script/2nd-system.sh";
 static const char *FILE_STOCK     = BM_ROOTDIR "/script/stock.sh";
 static const char *FILE_ADBD      = BM_ROOTDIR "/script/adbd.sh";
@@ -79,6 +80,7 @@ int battery_level(void);
 
 int snd_init(int ui);
 int snd_boot(int ui);
+int snd_boot_uart(int ui);
 int snd_system(int ui);
 int stk_boot(int ui);
 

@@ -400,6 +400,13 @@ static int run_bootmenu(void) {
           led_alert("red", DISABLE);
           status = BUTTON_TIMEOUT;
       }
+      else if (mode == int_mode("2nd-boot-uart")) {
+          led_alert("blue", DISABLE);
+          led_alert("red", ENABLE);
+          snd_boot_uart(DISABLE);
+          led_alert("red", DISABLE);
+          status = BUTTON_TIMEOUT;
+      }
       else if (mode == int_mode("2nd-system") || mode == int_mode("2nd-system-adb")) {
           led_alert("blue", DISABLE);
           led_alert("red", ENABLE);

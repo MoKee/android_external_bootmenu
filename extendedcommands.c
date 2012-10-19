@@ -41,6 +41,7 @@ const char* modes[] = {
   "bootmenu",
   "2nd-init",
   "2nd-boot",
+  "2nd-boot-uart",
   "2nd-system",
   "normal",
   "2nd-init-adb",
@@ -55,6 +56,7 @@ const char* modes[] = {
 // user friendly menu labels
 #define LABEL_2NDINIT    "2nd-init"
 #define LABEL_2NDBOOT    "2nd-boot"
+#define LABEL_2NDBOOT_UART    "2nd-boot-uart"
 #define LABEL_2NDSYSTEM  "2nd-system"
 #define LABEL_NORMAL     "Direct"
 
@@ -96,15 +98,16 @@ int show_menu_boot(void) {
 
   #define BOOT_2NDINIT    1
   #define BOOT_2NDBOOT    2
-  #define BOOT_2NDSYSTEM  3
-  #define BOOT_NORMAL     4
+  #define BOOT_2NDBOOT_UART    3
+  #define BOOT_2NDSYSTEM  4
+  #define BOOT_NORMAL     5
 
-  #define TOGGLE_ADB      5
+  #define TOGGLE_ADB      6
 
-  #define BOOT_FBTEST     6
-  #define BOOT_EVTTEST    7
-  #define BOOT_PNGTEST    8
-  #define BOOT_TEST       9
+  #define BOOT_FBTEST     7
+  #define BOOT_EVTTEST    8
+  #define BOOT_PNGTEST    9
+  #define BOOT_TEST       10
 
   int status, res = 0;
   const char* headers[] = {
@@ -118,6 +121,7 @@ int show_menu_boot(void) {
     {MENUITEM_SMALL, "Set Default: [" LABEL_2NDINIT "]", NULL},
     {MENUITEM_SMALL, LABEL_2NDINIT, NULL},
     {MENUITEM_SMALL, LABEL_2NDBOOT, NULL},
+    {MENUITEM_SMALL, LABEL_2NDBOOT_UART, NULL},
     {MENUITEM_SMALL, LABEL_2NDSYSTEM, NULL},
     {MENUITEM_SMALL, LABEL_NORMAL, NULL},
 
@@ -151,7 +155,15 @@ int show_menu_boot(void) {
     if (!file_exists((char*) FILE_2NDSYSTEM)) {
         items[BOOT_2NDSYSTEM].title = "";
     }
-
+    if (!file_exists((char*) FILE_2NDINIT)) {
+        items[BOOT_2NDINIT].title = "";
+    }
+    if (!file_exists((char*) FILE_2NDBOOT)) {
+        items[BOOT_2NDBOOT].title = "";
+    }
+    if (!file_exists((char*) FILE_2NDBOOT_UART)) {
+        items[BOOT_2NDBOOT_UART].title = "";
+    }
     //ADB Toggle
     sprintf(opt_adb, LABEL_TOGGLE_ADB " %s", boot_with_adb ? "enable":"disable");
     items[TOGGLE_ADB].title = opt_adb;
@@ -192,6 +204,11 @@ int show_menu_boot(void) {
         if (boot_with_adb && usb_connected() && !adb_started())
             exec_script(FILE_ADBD, ENABLE);
         status = snd_boot(ENABLE);
+        res = (status == 0);
+        goto exit_loop;
+    }
+    else if (ret.result == BOOT_2NDBOOT_UART) {
+        status = snd_boot_uart(ENABLE);
         res = (status == 0);
         goto exit_loop;
     }
@@ -637,7 +654,7 @@ int snd_init(int ui) {
 /**
  * snd_boot()
  *
- * For 2nd-boot (or a backup profile until 2nd-boot is ready)
+ * For 2nd-boot (boot custom kernel)
  */
 int snd_boot(int ui) {
   int status;
@@ -657,6 +674,53 @@ int snd_boot(int ui) {
     else
 #endif
       status = exec_script(FILE_2NDBOOT, ui);
+  ui_resume_redraw();
+
+  if (status) {
+    bypass_sign("no");
+    return -1;
+  }
+
+  if (ui)
+    ui_print("Wait 2 seconds....\n");
+  else
+    LOGI("Wait 2 seconds....\n");
+
+  for(i = 2; i > 0; --i) {
+    if (ui)
+      ui_print("%d.\n", i);
+    else
+      LOGI("%d..\n", i);
+    usleep(1000000);
+  }
+
+  bypass_sign("no");
+  return 0;
+}
+
+/**
+ * snd_boot()
+ *
+ * For 2nd-boot (boot custom kernel with uart support)
+ */
+int snd_boot_uart(int ui) {
+  int status;
+  int i;
+
+  bypass_sign("yes");
+
+  if (ui)
+    ui_print("Start " LABEL_2NDBOOT_UART " boot....\n");
+  else
+    LOGI("Start " LABEL_2NDBOOT_UART " boot....\n");
+
+  ui_stop_redraw();
+#ifdef USE_DUALCORE_DIRTY_HACK
+    if(!ui)
+      status = snd_exec_script(FILE_2NDBOOT_UART, ui);
+    else
+#endif
+      status = exec_script(FILE_2NDBOOT_UART, ui);
   ui_resume_redraw();
 
   if (status) {
