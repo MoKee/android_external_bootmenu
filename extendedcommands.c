@@ -423,39 +423,82 @@ int show_menu_system(void) {
 
 
 /**
- * show_menu_tools()
+ * show_menu_fs_tools()
  *
  * ADB shell and usb shares
  */
-int show_menu_tools(void) {
+int show_menu_fs_tools(void) {
 
-#define TOOL_ADB     0
-#define TOOL_USB     2
-#define TOOL_CDROM   3
-#define TOOL_SYSTEM  4
-#define TOOL_DATA    5
-#define TOOL_NATIVE  6
-
-#define TOOL_UMOUNT  8
-
-#ifndef BOARD_MMC_DEVICE
-#define BOARD_MMC_DEVICE "/dev/block/mmcblk1"
-#endif
+#define TOOL_FORMAT_EXT4 1
+#define TOOL_FORMAT_EXT3 2
 
   int status;
 
   const char* headers[] = {
-        " Don't forget to stop the share after use !",
         "",
-        " # Tools -->",
+        " # File System Tools -->",
         "",
         NULL
   };
   char** title_headers = prepend_title(headers);
 
   struct UiMenuItem items[] = {
-    {MENUITEM_SMALL, "ADB Daemon", NULL},
-    {MENUITEM_SMALL, "", NULL},
+    {MENUITEM_SMALL, "!!!This wipe your data!!!", NULL},
+    {MENUITEM_SMALL, "Format DATA and CACHE in ext4", NULL},
+    {MENUITEM_SMALL, "Format DATA and CACHE in ext3", NULL},
+    {MENUITEM_SMALL, "!!!This wipe your data!!!", NULL},
+    {MENUITEM_SMALL, "<--Go Back", NULL},
+    {MENUITEM_NULL, NULL, NULL},
+  };
+
+  struct UiMenuResult ret = get_menu_selection(title_headers, TABS, items, 1, 0);
+
+  switch (ret.result) {
+     case TOOL_FORMAT_EXT4:
+      ui_print("Format DATA and CACHE in ext4....");
+      status = exec_script(FILE_FORMAT_EXT4, ENABLE);
+      ui_print("Done..\n");
+      break;
+
+    case TOOL_FORMAT_EXT3:
+      ui_print("Format DATA and CACHE in ext3....");
+      status = exec_script(FILE_FORMAT_EXT3, ENABLE);
+      ui_print("Done..\n");
+      break;
+
+    default:
+      break;
+  }
+
+  free_menu_headers(title_headers);
+  return 0;
+}
+
+/**
+ * show_menu_tools()
+ *
+ * ADB shell and usb shares
+ */
+int show_menu_usb_mount_tools(void) {
+
+#define TOOL_USB     0
+#define TOOL_CDROM   1
+#define TOOL_SYSTEM  2
+#define TOOL_DATA    3
+#define TOOL_NATIVE  4
+#define TOOL_UMOUNT  6
+
+  int status;
+
+  const char* headers[] = {
+        "",
+        " # File System Tools -->",
+        "",
+        NULL
+  };
+  char** title_headers = prepend_title(headers);
+
+  struct UiMenuItem items[] = {
     {MENUITEM_SMALL, "Share SD Card", NULL},
     {MENUITEM_SMALL, "Share Drivers", NULL},
     {MENUITEM_SMALL, "Share system", NULL},
@@ -470,11 +513,6 @@ int show_menu_tools(void) {
   struct UiMenuResult ret = get_menu_selection(title_headers, TABS, items, 1, 0);
 
   switch (ret.result) {
-    case TOOL_ADB:
-      ui_print("ADB Deamon....");
-      status = exec_script(FILE_ADBD, ENABLE);
-      ui_print("Done..\n");
-      break;
 
     case TOOL_UMOUNT:
       ui_print("Stopping USB share...");
@@ -518,6 +556,66 @@ int show_menu_tools(void) {
       mount_usb_storage(BOARD_MMC_DEVICE);
       ui_print("Done..\n");
       break;
+
+    default:
+      break;
+  }
+
+  free_menu_headers(title_headers);
+  return 0;
+}
+
+
+/**
+ * show_menu_tools()
+ *
+ * ADB shell and usb shares
+ */
+int show_menu_tools(void) {
+
+#define TOOL_ADB     0
+#define USB_TOOLS    1
+#define FS_TOOLS     2
+
+#ifndef BOARD_MMC_DEVICE
+#define BOARD_MMC_DEVICE "/dev/block/mmcblk1"
+#endif
+
+  int status;
+
+  const char* headers[] = {
+        "",
+        " # USB Tools -->",
+        "",
+        NULL
+  };
+  char** title_headers = prepend_title(headers);
+
+  struct UiMenuItem items[] = {
+    {MENUITEM_SMALL, "ADB Daemon", NULL},
+    {MENUITEM_SMALL, "USB Mount tools", NULL},
+    {MENUITEM_SMALL, "File System Tools", NULL},
+    {MENUITEM_SMALL, "", NULL},
+    {MENUITEM_SMALL, "<--Go Back", NULL},
+    {MENUITEM_NULL, NULL, NULL},
+  };
+
+  struct UiMenuResult ret = get_menu_selection(title_headers, TABS, items, 1, 0);
+
+  switch (ret.result) {
+    case TOOL_ADB:
+      ui_print("ADB Deamon....");
+      status = exec_script(FILE_ADBD, ENABLE);
+      ui_print("Done..\n");
+      break;
+
+      case USB_TOOLS:
+        show_menu_usb_mount_tools();
+        break;
+
+      case FS_TOOLS:
+        show_menu_fs_tools();
+        break;
 
     default:
       break;

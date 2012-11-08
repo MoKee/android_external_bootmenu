@@ -427,7 +427,7 @@ show_menu_overclock(void) {
   struct UiMenuItem items[41];
 
   items[0] = buildMenuItem(MENUITEM_SMALL, NULL, NULL);
-  items[1] = buildMenuItem(MENUITEM_SMALL, NULL, NULL);
+  items[1] = buildMenuItem(MENUITEM_SMALL, "----------------------", NULL);
   items[2] = buildMenuItem(MENUITEM_SMALL, NULL, NULL);
 
   #define OC_MALLOC_FIRST 3
@@ -450,13 +450,14 @@ show_menu_overclock(void) {
       default: items[0].title = "+Status: [Unknown]"; break;
     }
 
+/*
     switch (get_overclock_value("load_all")) {
       case 0: items[1].title = "+Load all modules: [Disable]"; break;
       case 1: items[1].title = "+Load all modules: [Enable]"; break;
 
       default: items[1].title = "+Load all modules: [Unknown]"; break;
     }
-
+*/
     switch (get_overclock_value("scaling")) {
       case 0: items[2].title = "+Scaling: [Conservative]"; break;
       case 1: items[2].title = "+Scaling: [Interactive]"; break;
@@ -474,8 +475,8 @@ show_menu_overclock(void) {
     sprintf(items[4].title, "+Clk2: [%d]", get_overclock_value("clk2"));
     sprintf(items[5].title, "+Clk3: [%d]", get_overclock_value("clk3"));
 #ifdef USE_4_CLOCK_LEVELS
-    sprintf(items[6].title, "+Clk4: [%d] *gb kernel", get_overclock_value("clk4"));
-    sprintf(items[10].title, "+Vsel4: [%d] *gb kernel", get_overclock_value("vsel4"));
+    sprintf(items[6].title, "+Clk4: [%d]", get_overclock_value("clk4"));
+    sprintf(items[10].title, "+Vsel4: [%d]", get_overclock_value("vsel4"));
 #else
     strcpy(items[6].title, "  ----------------------");
     strcpy(items[10].title, "  ----------------------");
@@ -519,10 +520,10 @@ show_menu_overclock(void) {
     switch (ret.result) {
       case OVERCLOCK_STATUS:
         set_overclock_value("enable", menu_overclock_status(get_overclock_value("enable"))); break;
-
+/*
       case OVERCLOCK_LOAD_ALL:
         set_overclock_value("load_all", menu_overclock_status(get_overclock_value("load_all"))); break;
-
+*/
       case OVERCLOCK_SCALING:
         menu_overclock_scaling(); break;
 

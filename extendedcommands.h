@@ -41,6 +41,8 @@ static const char *FILE_SDCARD    = BM_ROOTDIR "/script/sdcard.sh";
 static const char *FILE_CDROM     = BM_ROOTDIR "/script/cdrom.sh";
 static const char *FILE_SYSTEM    = BM_ROOTDIR "/script/system.sh";
 static const char *FILE_DATA      = BM_ROOTDIR "/script/data.sh";
+static const char *FILE_FORMAT_EXT4     = BM_ROOTDIR "/script/format_ext4.sh";
+static const char *FILE_FORMAT_EXT3     = BM_ROOTDIR "/script/format_ext3.sh";
 
 static const char *FILE_OVERCLOCK       = BM_ROOTDIR "/script/overclock.sh";
 static const char *FILE_OVERCLOCK_CONF  = BM_ROOTDIR "/config/overclock.conf";
