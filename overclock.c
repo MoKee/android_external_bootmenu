@@ -35,8 +35,8 @@ struct overclock_config overclock[] = {
   { "scaling", 2 },
   { "clk1", 300 },
   { "clk2", 600 },
-  { "clk3", 1000 },
-  { "clk4", 1100 },
+  { "clk3", 800 },
+  { "clk4", 1000 },
   { "vsel1", 33 },
   { "vsel2", 48 },
   { "vsel3", 58 },
@@ -66,7 +66,7 @@ struct overclock_config overclock[] = {
   { "bst_sleep_ideal_freq", 300000 },
   { "bst_sleep_wakeup_freq", 300000 },
   { "bst_up_rate_us", 52000 },
-  { "iosched_sio", 0 },
+  { "iosched_sio", 1 },
   { NULL, 0 },
 };
 
