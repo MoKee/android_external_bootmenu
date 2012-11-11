@@ -443,10 +443,10 @@ int show_menu_fs_tools(void) {
   char** title_headers = prepend_title(headers);
 
   struct UiMenuItem items[] = {
-    {MENUITEM_SMALL, "!!!This wipe your data!!!", NULL},
-    {MENUITEM_SMALL, "Format DATA and CACHE in ext4", NULL},
-    {MENUITEM_SMALL, "Format DATA and CACHE in ext3", NULL},
-    {MENUITEM_SMALL, "!!!This wipe your data!!!", NULL},
+    {MENUITEM_SMALL, "!!!This will wipe your data!!!", NULL},
+    {MENUITEM_SMALL, "Format DATA and CACHE to ext4", NULL},
+    {MENUITEM_SMALL, "Format DATA and CACHE to ext3", NULL},
+    {MENUITEM_SMALL, "!!!This will wipe your data!!!", NULL},
     {MENUITEM_SMALL, "<--Go Back", NULL},
     {MENUITEM_NULL, NULL, NULL},
   };
