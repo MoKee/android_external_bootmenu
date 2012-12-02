@@ -37,6 +37,10 @@
 #define SH_RM    "busybox rm -f"
 #define SH_MKDIR "busybox mkdir -p"
 
+#ifdef BOARD_REBOOT_HOOK
+void board_reboot_hook(const char *reason, int *need_clear_reason);
+#endif
+
 int reboot_wrapper(const char* reason) {
 
     int ret = 0;
@@ -44,7 +48,11 @@ int reboot_wrapper(const char* reason) {
     int need_clear_reason = 0;
     FILE * config;
 
-    if (reason == NULL || strlen(reason) == 0 ) {
+#ifdef BOARD_REBOOT_HOOK
+    board_reboot_hook(reason, &need_clear_reason);
+#endif
+
+    if (need_clear_reason || reason == NULL || strlen(reason) == 0) {
 
         reason = REBOOT_REASON_DEFAULT;
 
