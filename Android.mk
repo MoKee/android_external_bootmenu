@@ -83,9 +83,8 @@ LOCAL_CFLAGS += \
     -DBOOTMENU_VERSION="\"${BOOTMENU_VERSION}${BOOTMENU_SUFFIX}\"" -DSTOCK_VERSION=0 \
     -DMAX_ROWS=44 -DMAX_COLS=96 ${EXTRA_CFLAGS}
 
-LOCAL_STATIC_LIBRARIES := libminui_bm libpixelflinger_static libpng libz
+LOCAL_STATIC_LIBRARIES := libminui_bm libpixelflinger_static libpng libz  libreboot
 LOCAL_STATIC_LIBRARIES += libstdc++ libc libcutils
-#LOCAL_STATIC_LIBRARIES += libm
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
@@ -115,7 +114,7 @@ LOCAL_CFLAGS := \
     -DBOOTMENU_VERSION="\"${BOOTMENU_VERSION}${BOOTMENU_SUFFIX}\"" -DSTOCK_VERSION=1 \
     -DMAX_ROWS=44 -DMAX_COLS=96 ${EXTRA_CFLAGS}
 
-LOCAL_STATIC_LIBRARIES := libminui_bm libpixelflinger_static libpng libz
+LOCAL_STATIC_LIBRARIES := libminui_bm libpixelflinger_static libpng libz libreboot
 LOCAL_STATIC_LIBRARIES += libstdc++ libc libcutils
 #LOCAL_STATIC_LIBRARIES += libm
 
