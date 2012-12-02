@@ -4,6 +4,11 @@
 #include <sys/reboot.h>
 #include <unistd.h>
 
+#ifdef RECOVERY_SHELL
+#include "../../../bootable/recovery/libcrecovery/common.h"
+#define system __system
+#endif
+
 #ifndef REBOOT_REASON_DEFAULT
 #define REBOOT_REASON_DEFAULT NULL
 #endif
