@@ -416,14 +416,9 @@ static int run_bootmenu(void) {
           led_alert("green", DISABLE);
           status = BUTTON_TIMEOUT;
       }
-      else if (mode == int_mode("recovery-dev")) {
-          led_alert("blue", DISABLE);
-          exec_script(FILE_CUSTOMRECOVERY, DISABLE);
-          status = BUTTON_TIMEOUT;
-      }
       else if (mode == int_mode("recovery")) {
           led_alert("blue", DISABLE);
-          exec_script(FILE_STABLERECOVERY, DISABLE);
+          exec_script(FILE_RECOVERY, DISABLE);
           status = BUTTON_TIMEOUT;
       }
       else if (mode == int_mode("shell")) {

@@ -443,10 +443,10 @@ int show_menu_fs_tools(void) {
   char** title_headers = prepend_title(headers);
 
   struct UiMenuItem items[] = {
-    {MENUITEM_SMALL, "!!!This wipe your data!!!", NULL},
-    {MENUITEM_SMALL, "Format DATA and CACHE in ext4", NULL},
-    {MENUITEM_SMALL, "Format DATA and CACHE in ext3", NULL},
-    {MENUITEM_SMALL, "!!!This wipe your data!!!", NULL},
+    {MENUITEM_SMALL, "!!!This will wipe your data!!!", NULL},
+    {MENUITEM_SMALL, "Format DATA and CACHE to ext4", NULL},
+    {MENUITEM_SMALL, "Format DATA and CACHE to ext3", NULL},
+    {MENUITEM_SMALL, "!!!This will wipe your data!!!", NULL},
     {MENUITEM_SMALL, "<--Go Back", NULL},
     {MENUITEM_NULL, NULL, NULL},
   };
@@ -630,15 +630,8 @@ int show_menu_tools(void) {
  *
  */
 int show_menu_recovery(void) {
-
-#ifdef USE_STABLE_RECOVERY
-  #define RECOVERY_CUSTOM     0
-  #define RECOVERY_STABLE     1
-  #define RECOVERY_STOCK      2
-#else
   #define RECOVERY_CUSTOM     0
   #define RECOVERY_STOCK      1
-#endif
 
   int status, res=0;
   char** args;
@@ -653,9 +646,6 @@ int show_menu_recovery(void) {
 
   struct UiMenuItem items[] = {
     {MENUITEM_SMALL, "Custom Recovery", NULL},
-#ifdef USE_STABLE_RECOVERY
-    {MENUITEM_SMALL, "Stable Recovery", NULL},
-#endif
     {MENUITEM_SMALL, "Stock Recovery", NULL},
     {MENUITEM_SMALL, "<--Go Back", NULL},
     {MENUITEM_NULL, NULL, NULL},
@@ -669,24 +659,11 @@ int show_menu_recovery(void) {
       ui_print("This can take a couple of seconds.\n");
       ui_show_text(DISABLE);
       ui_stop_redraw();
-      status = exec_script(FILE_CUSTOMRECOVERY, ENABLE);
+      status = exec_script(FILE_RECOVERY, ENABLE);
       ui_resume_redraw();
       ui_show_text(ENABLE);
       if (!status) res = 1;
       break;
-
-#ifdef USE_STABLE_RECOVERY
-    case RECOVERY_STABLE:
-      ui_print("Starting Recovery..\n");
-      ui_print("This can take a couple of seconds.\n");
-      ui_show_text(DISABLE);
-      ui_stop_redraw();
-      status = exec_script(FILE_STABLERECOVERY, ENABLE);
-      ui_resume_redraw();
-      ui_show_text(ENABLE);
-      if (!status) res = 1;
-      break;
-#endif
 
     case RECOVERY_STOCK:
       ui_print("Rebooting to Stock Recovery..\n");
