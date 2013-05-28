@@ -1,0 +1,4 @@
+ICS reboot applet replacement to be able to reboot to bootmenu and recovery
+
+Require a patch in system/core/toolbox Android.mk (or a simple copy to this folder)
+
