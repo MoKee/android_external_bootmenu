@@ -42,7 +42,8 @@ static const char *FILE_FORMAT_EXT3     = BM_ROOTDIR "/script/format_ext3.sh";
 static const char *FILE_OVERCLOCK       = BM_ROOTDIR "/script/overclock.sh";
 static const char *FILE_OVERCLOCK_CONF  = BM_ROOTDIR "/config/overclock.conf";
 
-static const char *FILE_RECOVERY  = BM_ROOTDIR "/script/recovery.sh";
+static const char *FILE_CUSTOMRECOVERY  = BM_ROOTDIR "/script/recovery.sh";
+static const char *FILE_STABLERECOVERY  = BM_ROOTDIR "/script/recovery_stable.sh";
 static const char *FILE_BOOTMODE_CLEAN  = BM_ROOTDIR "/script/bootmode_clean.sh";
 
 static const char *FILE_DEFAULTBOOTMODE = BM_ROOTDIR "/config/default_bootmode.conf";

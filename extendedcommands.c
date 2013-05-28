@@ -630,8 +630,10 @@ int show_menu_tools(void) {
  *
  */
 int show_menu_recovery(void) {
+
   #define RECOVERY_CUSTOM     0
-  #define RECOVERY_STOCK      1
+  #define RECOVERY_STABLE     1
+  #define RECOVERY_STOCK      2
 
   int status, res=0;
   char** args;
@@ -645,7 +647,8 @@ int show_menu_recovery(void) {
   char** title_headers = prepend_title(headers);
 
   struct UiMenuItem items[] = {
-    {MENUITEM_SMALL, "Custom Recovery", NULL},
+    {MENUITEM_SMALL, "TWRP Recovery", NULL},
+    {MENUITEM_SMALL, "CWM Recovery", NULL},
     {MENUITEM_SMALL, "Stock Recovery", NULL},
     {MENUITEM_SMALL, "<--Go Back", NULL},
     {MENUITEM_NULL, NULL, NULL},
@@ -659,7 +662,18 @@ int show_menu_recovery(void) {
       ui_print("This can take a couple of seconds.\n");
       ui_show_text(DISABLE);
       ui_stop_redraw();
-      status = exec_script(FILE_RECOVERY, ENABLE);
+      status = exec_script(FILE_CUSTOMRECOVERY, ENABLE);
+      ui_resume_redraw();
+      ui_show_text(ENABLE);
+      if (!status) res = 1;
+      break;
+
+    case RECOVERY_STABLE:
+      ui_print("Starting Recovery..\n");
+      ui_print("This can take a couple of seconds.\n");
+      ui_show_text(DISABLE);
+      ui_stop_redraw();
+      status = exec_script(FILE_STABLERECOVERY, ENABLE); 
       ui_resume_redraw();
       ui_show_text(ENABLE);
       if (!status) res = 1;
