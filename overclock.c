@@ -436,10 +436,10 @@ show_menu_overclock(void) {
     items[i] = buildMenuItem(MENUITEM_SMALL, (char*)malloc(sizeof(char)*48), NULL);
   }
 
-  items[37] = buildMenuItem(MENUITEM_SMALL, "Set defaults(*req reboot/don't save!!)", NULL);
-  items[38] = buildMenuItem(MENUITEM_SMALL, "Save", NULL);
-  items[39] = buildMenuItem(MENUITEM_SMALL, "<--Go Back", NULL);
-  items[40] = buildMenuItem(MENUITEM_NULL, NULL, NULL);
+  items[11] = buildMenuItem(MENUITEM_SMALL, "Set defaults(*req reboot/don't save!!)", NULL);
+  items[12] = buildMenuItem(MENUITEM_SMALL, "Save", NULL);
+  items[13] = buildMenuItem(MENUITEM_SMALL, "<--Go Back", NULL);
+  items[14] = buildMenuItem(MENUITEM_NULL, NULL, NULL);
 
   for (;;) {
 
@@ -484,7 +484,7 @@ show_menu_overclock(void) {
     sprintf(items[7].title, "+Vsel1: [%d]", get_overclock_value("vsel1"));
     sprintf(items[8].title, "+Vsel2: [%d]", get_overclock_value("vsel2"));
     sprintf(items[9].title, "+Vsel3: [%d]", get_overclock_value("vsel3"));
-
+/*
     sprintf(items[11].title, "+con_up_threshold: [%d", get_overclock_value("con_up_threshold"));
     sprintf(items[12].title, "+con_down_threshold: [%d]", get_overclock_value("con_down_threshold"));
     sprintf(items[13].title, "+con_freq_step: [%d]", get_overclock_value("con_freq_step"));
@@ -514,7 +514,7 @@ show_menu_overclock(void) {
     sprintf(items[35].title, "+bst_up_rate_us: [%d]", get_overclock_value("bst_up_rate_us"));
 
     sprintf(items[36].title, "+iosched_sio: [%d]", get_overclock_value("iosched_sio"));
-
+*/
     struct UiMenuResult ret = get_menu_selection(title_headers, TABS, items, 1, select);
 
     switch (ret.result) {
@@ -553,6 +553,7 @@ show_menu_overclock(void) {
       case OVERCLOCK_VSEL3:
         set_overclock_value("vsel3", menu_set_value("Vsel3", get_overclock_value("vsel3"), 10, 100, 1)); break;
 
+/*
       case OVERCLOCK_CON_UP_THRESHOLD:
         set_overclock_value("con_up_threshold", menu_set_value("con_up_threshold", get_overclock_value("con_up_threshold"), 1, 100, 1)); break;
 
@@ -610,7 +611,7 @@ show_menu_overclock(void) {
         set_overclock_value("bst_sleep_wakeup_freq", menu_set_value("bst_sleep_wakeup_freq", get_overclock_value("bst_sleep_wakeup_freq"), 300000, 1200000, 1000)); break;
       case OVERCLOCK_bst_up_rate_us:
         set_overclock_value("bst_up_rate_us", menu_set_value("bst_up_rate_us", get_overclock_value("bst_up_rate_us"), 20000, 500000, 1000)); break;
-
+*/
       case  OVERCLOCK_iosched_sio:
         set_overclock_value("iosched_sio", menu_set_value("iosched_sio", get_overclock_value("iosched_sio"), 0, 1, 1)); break;
 
