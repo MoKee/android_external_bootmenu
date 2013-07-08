@@ -34,31 +34,18 @@
 #include "battery/batt_cpcap.h"
 #endif
 
-//#define DEBUG_ALLOC
-
-#define MODES_COUNT 12
+#define MODES_COUNT 4
 const char* modes[] = {
   "bootmenu",
-  "2nd-init",
   "2nd-boot",
   "2nd-boot-uart",
   "2nd-system",
-  "normal",
-  "2nd-init-adb",
-  "2nd-boot-adb",
-  "2nd-system-adb",
-  "normal-adb",
-  "recovery",
-  "recovery-dev",
-  "shell",
 };
 
 // user friendly menu labels
-#define LABEL_2NDINIT    "2nd-init"
 #define LABEL_2NDBOOT    "2nd-boot"
 #define LABEL_2NDBOOT_UART    "2nd-boot-uart"
 #define LABEL_2NDSYSTEM  "2nd-system"
-#define LABEL_NORMAL     "Direct"
 
 #define LABEL_TOGGLE_ADB "ADB:"
 
@@ -96,18 +83,9 @@ const char* str_mode(int mode) {
  */
 int show_menu_boot(void) {
 
-  #define BOOT_2NDINIT    1
-  #define BOOT_2NDBOOT    2
-  #define BOOT_2NDBOOT_UART    3
-  #define BOOT_2NDSYSTEM  4
-  #define BOOT_NORMAL     5
-
-  #define TOGGLE_ADB      6
-
-  #define BOOT_FBTEST     7
-  #define BOOT_EVTTEST    8
-  #define BOOT_PNGTEST    9
-  #define BOOT_TEST       10
+  #define BOOT_2NDBOOT    1
+  #define BOOT_2NDBOOT_UART    2
+  #define BOOT_2NDSYSTEM  3
 
   int status, res = 0;
   const char* headers[] = {
@@ -117,22 +95,12 @@ int show_menu_boot(void) {
   };
   char** title_headers = prepend_title(headers);
 
-  struct UiMenuItem items[(MODES_COUNT - 3 + 6)] = {
-    {MENUITEM_SMALL, "Set Default: [" LABEL_2NDINIT "]", NULL},
-    {MENUITEM_SMALL, LABEL_2NDINIT, NULL},
+  struct UiMenuItem items[(6)] = {
+    {MENUITEM_SMALL, "Set Default: [" LABEL_2NDBOOT "]", NULL},
     {MENUITEM_SMALL, LABEL_2NDBOOT, NULL},
     {MENUITEM_SMALL, LABEL_2NDBOOT_UART, NULL},
     {MENUITEM_SMALL, LABEL_2NDSYSTEM, NULL},
-    {MENUITEM_SMALL, LABEL_NORMAL, NULL},
 
-    {MENUITEM_SMALL, LABEL_TOGGLE_ADB, NULL},
-
-#ifdef DEBUG_ALLOC
-    {MENUITEM_SMALL, "test fb", NULL},
-    {MENUITEM_SMALL, "test evt", NULL},
-    {MENUITEM_SMALL, "test png", NULL},
-    {MENUITEM_SMALL, "test all", NULL},
-#endif
     {MENUITEM_SMALL, "<--Go Back", NULL},
     {MENUITEM_NULL, NULL, NULL},
   };
@@ -149,14 +117,8 @@ int show_menu_boot(void) {
     items[0].title = opt_def;
 
     //Hide unavailables modes
-    if (!file_exists((char*) FILE_STOCK)) {
-        items[BOOT_NORMAL].title = "";
-    }
     if (!file_exists((char*) FILE_2NDSYSTEM)) {
         items[BOOT_2NDSYSTEM].title = "";
-    }
-    if (!file_exists((char*) FILE_2NDINIT)) {
-        items[BOOT_2NDINIT].title = "";
     }
     if (!file_exists((char*) FILE_2NDBOOT)) {
         items[BOOT_2NDBOOT].title = "";
@@ -164,9 +126,6 @@ int show_menu_boot(void) {
     if (!file_exists((char*) FILE_2NDBOOT_UART)) {
         items[BOOT_2NDBOOT_UART].title = "";
     }
-    //ADB Toggle
-    sprintf(opt_adb, LABEL_TOGGLE_ADB " %s", boot_with_adb ? "enable":"disable");
-    items[TOGGLE_ADB].title = opt_adb;
 
     ret = get_menu_selection(title_headers, TABS, items, 1, 0);
 
@@ -180,26 +139,7 @@ int show_menu_boot(void) {
         continue;
     }
 
-    //Next boot mode (after reboot, no more required)
-    /*
-    else if (ret.result < BOOT_NORMAL) {
-        if (next_bootmode_write( str_mode(ret.result) ) != 0) {
-            //write error
-            continue;
-        }
-        sync();
-        reboot(RB_AUTOBOOT);
-        goto exit_loop;
-    }*/
-
     //Direct boot modes
-    else if (ret.result == BOOT_2NDINIT) {
-        if (boot_with_adb && usb_connected() && !adb_started())
-            exec_script(FILE_ADBD, ENABLE);
-        status = snd_init(ENABLE);
-        res = (status == 0);
-        goto exit_loop;
-    }
     else if (ret.result == BOOT_2NDBOOT) {
         if (boot_with_adb && usb_connected() && !adb_started())
             exec_script(FILE_ADBD, ENABLE);
@@ -217,59 +157,9 @@ int show_menu_boot(void) {
             LOGE("Script not found :\n%s\n", FILE_2NDSYSTEM);
             continue;
         }
-        if (boot_with_adb && usb_connected() && !adb_started())
-            exec_script(FILE_ADBD, ENABLE);
-        status = snd_system(ENABLE);
-        res = (status == 0);
-        goto exit_loop;
-    }
-    else if (ret.result == BOOT_NORMAL) {
-        if (boot_with_adb && usb_connected() && !adb_started())
-            exec_script(FILE_ADBD, ENABLE);
-        status = stk_boot(ENABLE);
-        res = (status == 0);
-        goto exit_loop;
-    }
-    else if (ret.result == TOGGLE_ADB) {
-        boot_with_adb = (boot_with_adb == 0);
-        continue;
     }
     else
     switch (ret.result) {
-#ifdef DEBUG_ALLOC
-      case BOOT_TEST:
-        led_alert("green", 1);
-        ui_final();
-        ui_init();
-        led_alert("green", 0);
-        res = 0;
-        goto exit_loop;
-
-      case BOOT_FBTEST:
-        led_alert("green", 1);
-        gr_fb_test();
-        ui_stop_redraw();
-        ui_resume_redraw();
-        led_alert("green", 0);
-        res = 0;
-        goto exit_loop;
-
-      case BOOT_EVTTEST:
-        led_alert("green", 1);
-        evt_exit();
-        evt_init();
-        led_alert("green", 0);
-        res = 0;
-        goto exit_loop;
-
-      case BOOT_PNGTEST:
-        led_alert("green", 1);
-        ui_free_bitmaps();
-        ui_create_bitmaps();
-        led_alert("green", 0);
-        res = 0;
-        goto exit_loop;
-#endif
       default:
         goto exit_loop;
     }
@@ -290,8 +180,8 @@ exit_loop:
  */
 int show_config_bootmode(void) {
 
-  //last mode enabled for default modes (adb disabled)
-  #define LAST_MODE 5
+  //last mode enabled for default modes
+  #define LAST_MODE 3
 
   int res = 0;
   const char* headers[3] = {
@@ -326,16 +216,15 @@ int show_config_bootmode(void) {
       res=1;
       break;
     }
-    if (ret.result == BOOT_NORMAL) {
-      if (!file_exists((char*) FILE_STOCK)) {
-        //disable stock boot in CyanogenMod for locked devices
-        LOGI("Function disabled in this version\n");
-        continue;
-      }
-    }
     if (ret.result == BOOT_2NDSYSTEM) {
       if (!file_exists((char*) FILE_2NDSYSTEM)) {
         LOGE("Script not found :\n%s\n", FILE_2NDSYSTEM);
+        continue;
+      }
+    }
+    if (ret.result == BOOT_2NDBOOT_UART) {
+      if (!file_exists((char*) FILE_2NDBOOT_UART)) {
+        LOGE("Script not found :\n%s\n", FILE_2NDBOOT_UART);
         continue;
       }
     }
@@ -352,75 +241,6 @@ int show_config_bootmode(void) {
   free_menu_headers(title_headers);
   return res;
 }
-
-
-#if STOCK_VERSION
-
-/**
- * show_menu_system()
- *
- */
-int show_menu_system(void) {
-
-  #define SYSTEM_OVERCLOCK  0
-  #define SYSTEM_ROOT       1
-  #define SYSTEM_UNINSTALL  2
-
-  int status;
-  int select = 0;
-  struct stat buf;
-
-  const char* headers[] = {
-        " # System -->",
-        "",
-        NULL
-  };
-  char** title_headers = prepend_title(headers);
-
-  struct UiMenuItem items[] = {
-    {MENUITEM_SMALL, "Overclock", NULL},
-    {MENUITEM_SMALL, "UnRooting", NULL},
-    {MENUITEM_SMALL, "Uninstall BootMenu", NULL},
-    {MENUITEM_SMALL, "<--Go Back", NULL},
-    {MENUITEM_NULL, NULL, NULL},
-  };
-
-  for (;;) {
-
-    if ((stat("/system/app/Superuser.apk", &buf) < 0) && (stat("/system/app/superuser.apk", &buf) < 0))
-      items[1].title = "Rooting";
-    else
-      items[1].title = "UnRooting";
-
-    struct UiMenuResult ret = get_menu_selection(title_headers, TABS, items, 1, select);
-
-    switch (ret.result) {
-
-      case SYSTEM_OVERCLOCK:
-        status = show_menu_overclock();
-        break;
-      case SYSTEM_ROOT:
-        ui_print("[Un]Rooting....");
-        status = exec_script(FILE_ROOT, ENABLE);
-        ui_print("Done..\n");
-        break;
-      case SYSTEM_UNINSTALL:
-        ui_print("Uninstall BootMenu....");
-        status = exec_script(FILE_UNINSTALL, ENABLE);
-        ui_print("Done..\n");
-        ui_print("******** Plz reboot now.. ********\n");
-        break;
-      default:
-        return 0;
-    }
-    select = ret.result;
-  }
-
-  free_menu_headers(title_headers);
-  return 0;
-}
-#endif //#if STOCK_VERSION
-
 
 /**
  * show_menu_fs_tools()
@@ -647,9 +467,9 @@ int show_menu_recovery(void) {
   char** title_headers = prepend_title(headers);
 
   struct UiMenuItem items[] = {
-    {MENUITEM_SMALL, "TWRP Recovery", NULL},
+    {MENUITEM_SMALL, "Team Win Recovery", NULL},
     {MENUITEM_SMALL, "CWM Recovery", NULL},
-    {MENUITEM_SMALL, "Stock Recovery", NULL},
+    {MENUITEM_SMALL, "Motorola Stock Recovery", NULL},
     {MENUITEM_SMALL, "<--Go Back", NULL},
     {MENUITEM_NULL, NULL, NULL},
   };
@@ -694,53 +514,6 @@ int show_menu_recovery(void) {
 }
 
 /**
- * snd_init()
- *
- * 2nd-init Profile (reload init with new .rc files)
- */
-int snd_init(int ui) {
-  int status;
-  int i;
-
-  bypass_sign("yes");
-
-  if (ui)
-    ui_print("Start " LABEL_2NDINIT " boot....\n");
-  else
-    LOGI("Start " LABEL_2NDINIT " boot....\n");
-
-  ui_stop_redraw();
-#ifdef USE_DUALCORE_DIRTY_HACK
-    if(!ui)
-      status = snd_exec_script(FILE_2NDINIT, ui);
-    else
-#endif
-      status = exec_script(FILE_2NDINIT, ui);
-  ui_resume_redraw();
-
-  if (status) {
-    return -1;
-    bypass_sign("no");
-  }
-
-  if (ui)
-    ui_print("Wait 2 seconds....\n");
-  else
-    LOGI("Wait 2 seconds....\n");
-
-  for(i = 2; i > 0; --i) {
-    if (ui)
-      ui_print("%d.\n", i);
-    else
-      LOGI("%d..\n", i);
-    usleep(1000000);
-  }
-
-  bypass_sign("no");
-  return 0;
-}
-
-/**
  * snd_boot()
  *
  * For 2nd-boot (boot custom kernel)
@@ -757,11 +530,6 @@ int snd_boot(int ui) {
     LOGI("Start " LABEL_2NDBOOT " boot....\n");
 
   ui_stop_redraw();
-#ifdef USE_DUALCORE_DIRTY_HACK
-    if(!ui)
-      status = snd_exec_script(FILE_2NDBOOT, ui);
-    else
-#endif
       status = exec_script(FILE_2NDBOOT, ui);
   ui_resume_redraw();
 
@@ -804,11 +572,6 @@ int snd_boot_uart(int ui) {
     LOGI("Start " LABEL_2NDBOOT_UART " boot....\n");
 
   ui_stop_redraw();
-#ifdef USE_DUALCORE_DIRTY_HACK
-    if(!ui)
-      status = snd_exec_script(FILE_2NDBOOT_UART, ui);
-    else
-#endif
       status = exec_script(FILE_2NDBOOT_UART, ui);
   ui_resume_redraw();
 
@@ -837,7 +600,7 @@ int snd_boot_uart(int ui) {
 /**
  * snd_system()
  *
- * Reserved for Dual Boot
+ * Dual Boot
  */
 int snd_system(int ui) {
   int status;
@@ -851,11 +614,6 @@ int snd_system(int ui) {
     LOGI("Start " LABEL_2NDSYSTEM " boot....\n");
 
   ui_stop_redraw();
-#ifdef USE_DUALCORE_DIRTY_HACK
-    if(!ui)
-      status = snd_exec_script(FILE_2NDSYSTEM, ui);
-    else
-#endif
       status = exec_script(FILE_2NDSYSTEM, ui);
   ui_resume_redraw();
 
@@ -876,34 +634,6 @@ int snd_system(int ui) {
       LOGI("%d..\n", i);
     usleep(1000000);
   }
-
-  bypass_sign("no");
-  return 0;
-}
-
-/**
- * stk_boot()
- *
- * Direct boot (continue normal execution of init)
- */
-int stk_boot(int ui) {
-  int status;
-  int i;
-
-  bypass_sign("yes");
-
-  if (ui)
-    ui_print("Start " LABEL_NORMAL " boot....\n");
-  else
-    LOGI("Start " LABEL_NORMAL " boot....\n");
-
-  status = exec_script(FILE_STOCK, ui);
-  if (status) {
-    return -1;
-    bypass_sign("no");
-  }
-
-  usleep(1000000);
 
   bypass_sign("no");
   return 0;
@@ -948,7 +678,6 @@ int get_bootmode(int clean,int log) {
       fclose(f);
 
       if (clean) {
-          // unlink(FILE_BOOTMODE); //buggy unlink ?
           exec_script(FILE_BOOTMODE_CLEAN,DISABLE);
       }
 
@@ -1156,49 +885,6 @@ int exec_script(const char* filename, int ui) {
 inline int snd_reboot() {
   sync();
   return reboot(RB_AUTOBOOT);
-}
-
-/**
- * snd_exec_script()
- *
- * dirty hack for dual core cpus
- * sometimes 2nd-init doesnt work, when task is not executed on same core
- * (for more infos search for ptrace() problems related to cpu affinity)
- *
- * We need to reboot phone to retry because the phone is not in a proper state
- */
-int snd_exec_script(const char* filename, int ui) {
-  int status;
-  char** args;
-
-  if (!file_exists((char*) filename)) {
-    LOGE("Script not found :\n%s\n", filename);
-    return snd_reboot();
-  }
-
-  LOGI("exec %s\n", filename);
-
-  chmod(filename, 0755);
-
-  args = malloc(sizeof(char*) * 2);
-  args[0] = (char *) filename;
-  args[1] = NULL;
-
-  status = exec_and_wait(args);
-
-  free(args);
-
-  if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-    if (ui) {
-      LOGE("Error in %s\n(Result: %s)\nWill auto restart now\n", filename, strerror(errno));
-    }
-    else {
-      LOGI("E:Error in %s\n(Result: %s)\nWill auto restart now\n", filename, strerror(errno));
-    }
-    return snd_reboot();
-  }
-
-  return 0;
 }
 
 /**

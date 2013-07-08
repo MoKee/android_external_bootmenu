@@ -16,7 +16,7 @@ bootmenu_sources := \
     default_bootmenu_ui.c \
     ui.c \
 
-BOOTMENU_VERSION:=2.1-beta
+BOOTMENU_VERSION:=2.2-beta
 
 # Variables available in BoardConfig.mk related to mount devices
 
@@ -58,19 +58,8 @@ ifneq ($(BOARD_BOOTMODE_CONFIG_FILE),)
     EXTRA_CFLAGS += -DBOOTMODE_CONFIG_FILE="\"$(BOARD_BOOTMODE_CONFIG_FILE)\""
 endif
 
-# Special flag for unlocked devices (do not override libreboot for recovery)
-ifeq ($(TARGET_BOOTLOADER_BOARD_NAME),olympus)
-    EXTRA_CFLAGS += -DUNLOCKED_DEVICE -DNO_OVERCLOCK
-endif
-
-ifneq ($(BOARD_DEFY_MODEL),DEFY_FROYO)
-    EXTRA_CFLAGS += -DUSE_4_CLOCK_LEVELS
-endif
-
 ######################################
 # Cyanogen version
-
-ifneq ($(BUILD_BOOTMENU_STANDALONE),1)
 
 LOCAL_MODULE := bootmenu
 LOCAL_MODULE_TAGS := optional
@@ -91,41 +80,6 @@ LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_MODULE_PATH := $(PRODUCT_OUT)/system/bin
 
 include $(BUILD_EXECUTABLE)
-
-endif # !BUILD_BOOTMENU_STANDALONE
-
-#####################################
-# Standalone version for stock roms
-
-ifeq ($(BUILD_BOOTMENU_STANDALONE),1)
-
-LOCAL_PATH := $(bootmenu_local_path)
-
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := Bootmenu
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_SRC_FILES := $(bootmenu_sources)
-
-BOOTMENU_SUFFIX := -$(TARGET_BOOTLOADER_BOARD_NAME)
-
-LOCAL_CFLAGS := \
-    -DBOOTMENU_VERSION="\"${BOOTMENU_VERSION}${BOOTMENU_SUFFIX}\"" -DSTOCK_VERSION=1 \
-    -DMAX_ROWS=44 -DMAX_COLS=96 ${EXTRA_CFLAGS}
-
-LOCAL_STATIC_LIBRARIES := libminui_bm libpixelflinger_static libpng libz libreboot
-LOCAL_STATIC_LIBRARIES += libstdc++ libc libcutils
-#LOCAL_STATIC_LIBRARIES += libm
-
-LOCAL_FORCE_STATIC_EXECUTABLE := true
-
-LOCAL_MODULE_PATH := $(PRODUCT_OUT)/system/bootmenu/binary
-LOCAL_MODULE_STEM := bootmenu-standalone
-
-include $(BUILD_EXECUTABLE)
-
-endif #BUILD_BOOTMENU_STANDALONE
 
 #####################################
 # Include minui

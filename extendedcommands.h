@@ -26,7 +26,6 @@
 static const char *FILE_PRE_MENU  = BM_ROOTDIR "/script/pre_bootmenu.sh";
 static const char *FILE_POST_MENU = BM_ROOTDIR "/script/post_bootmenu.sh";
 
-static const char *FILE_2NDINIT   = BM_ROOTDIR "/script/2nd-init.sh";
 static const char *FILE_2NDBOOT   = BM_ROOTDIR "/script/2nd-boot.sh";
 static const char *FILE_2NDBOOT_UART   = BM_ROOTDIR "/script/2nd-boot-uart.sh";
 static const char *FILE_2NDSYSTEM = BM_ROOTDIR "/script/2nd-system.sh";
@@ -54,15 +53,6 @@ static const char *SYS_POWER_CONNECTED  = "/sys/class/power_supply/ac/online";
 static const char *SYS_USB_CONNECTED    = "/sys/class/power_supply/usb/online";
 static const char *SYS_BATTERY_LEVEL    = "/sys/class/power_supply/battery/charge_counter"; // content: 0 to 100
 
-#if STOCK_VERSION
-
-static const char *FILE_ROOT      = BM_ROOTDIR "/script/unroot.sh";
-static const char *FILE_UNINSTALL = BM_ROOTDIR "/script/uninstall.sh";
-
-int show_menu_system(void);
-
-#endif //STOCK_VERSION
-
 int int_mode(char* mode);
 const char* str_mode(int mode);
 
@@ -75,11 +65,9 @@ int usb_connected(void);
 int adb_started(void);
 int battery_level(void);
 
-int snd_init(int ui);
 int snd_boot(int ui);
 int snd_boot_uart(int ui);
 int snd_system(int ui);
-int stk_boot(int ui);
 
 int show_config_bootmode(void);
 

@@ -36,28 +36,22 @@ enum {
 };
 
 /* Main menu items */
-#define ITEM_REBOOT      0
-#define ITEM_BOOT        1
-#define ITEM_SYSTEM      2
-#define ITEM_OVERCLOCK   2
-#define ITEM_RECOVERY    3
-#define ITEM_TOOLS       4
-#define ITEM_POWEROFF    5
+#define ITEM_BOOT        0
+#define ITEM_OVERCLOCK   1
+#define ITEM_RECOVERY    2
+#define ITEM_TOOLS       3
+#define ITEM_REBOOT      5
+#define ITEM_POWEROFF    6
 
-#define ITEM_LAST        5
+#define ITEM_LAST        6
 
 struct UiMenuItem MENU_ITEMS[] = {
-  {MENUITEM_SMALL, "Reboot", NULL},
   {MENUITEM_SMALL, "Boot", NULL},
-#if STOCK_VERSION
-  {MENUITEM_SMALL, "System", ""},
-#elif !defined(NO_OVERCLOCK)
   {MENUITEM_SMALL, "CPU Settings", ""},
-#else
-  {MENUITEM_SMALL, "", ""},
-#endif
   {MENUITEM_SMALL, "Recovery", ""},
   {MENUITEM_SMALL, "Tools", ""},
+  {MENUITEM_SMALL, "----------------------", ""},
+  {MENUITEM_SMALL, "Reboot", NULL},
   {MENUITEM_SMALL, "Shutdown", ""},
   {MENUITEM_NULL, NULL, NULL},
 };
@@ -220,28 +214,22 @@ static void prompt_and_wait() {
     if (menuret.result >= 0 && menuret.result <= ITEM_LAST) {
 
       switch (menuret.result) {
-      case ITEM_REBOOT:
-        sync();
-        reboot_wrapper(NULL);
-        return;
       case ITEM_BOOT:
         if (show_menu_boot()) return;
         break;
-#if STOCK_VERSION
-      case ITEM_SYSTEM:
-        if (show_menu_system()) return;
-        break;
-#elif !defined(NO_OVERCLOCK)
       case ITEM_OVERCLOCK:
         if (show_menu_overclock()) return;
         break;
-#endif
       case ITEM_RECOVERY:
         if (show_menu_recovery()) return;
         break;
       case ITEM_TOOLS:
         if (show_menu_tools()) return;
         break;
+      case ITEM_REBOOT:
+        sync();
+        __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART, NULL);
+        return;
       case ITEM_POWEROFF:
         sync();
         __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_POWER_OFF, NULL);
@@ -362,21 +350,10 @@ static int run_bootmenu(void) {
     mode = get_bootmode(1,1);
 
     if (mode == int_mode("bootmenu")
-     || mode == int_mode("recovery")
-     || mode == int_mode("shell")) {
+     || mode == int_mode("recovery")) {
         // dont wait if these modes are asked
     } else {
         status = (wait_key(KEY_VOLUMEDOWN) ? BUTTON_PRESSED : BUTTON_TIMEOUT);
-    }
-
-    // only start adb if usb is connected
-    if (usb_connected()) {
-      if (mode == int_mode("2nd-init-adb")
-       || mode == int_mode("2nd-boot-adb")
-       || mode == int_mode("2nd-system-adb")) {
-         exec_script(FILE_ADBD, DISABLE);
-         adb_started = 1;
-      }
     }
 
     // on timeout
@@ -386,18 +363,11 @@ static int run_bootmenu(void) {
           led_alert("blue", DISABLE);
           status = BUTTON_PRESSED;
       }
-      else if (mode == int_mode("2nd-init") || mode == int_mode("2nd-init-adb")) {
+      else if (mode == int_mode("2nd-boot")) {
           led_alert("blue", DISABLE);
           led_alert("green", ENABLE);
-          snd_init(DISABLE);
-          led_alert("green", DISABLE);
-          status = BUTTON_TIMEOUT;
-      }
-      else if (mode == int_mode("2nd-boot") || mode == int_mode("2nd-boot-adb")) {
-          led_alert("blue", DISABLE);
-          led_alert("red", ENABLE);
           snd_boot(DISABLE);
-          led_alert("red", DISABLE);
+          led_alert("green", DISABLE);
           status = BUTTON_TIMEOUT;
       }
       else if (mode == int_mode("2nd-boot-uart")) {
@@ -407,7 +377,7 @@ static int run_bootmenu(void) {
           led_alert("red", DISABLE);
           status = BUTTON_TIMEOUT;
       }
-      else if (mode == int_mode("2nd-system") || mode == int_mode("2nd-system-adb")) {
+      else if (mode == int_mode("2nd-system")) {
           led_alert("blue", DISABLE);
           led_alert("red", ENABLE);
           led_alert("green", ENABLE);
@@ -426,17 +396,6 @@ static int run_bootmenu(void) {
           exec_script(FILE_STABLERECOVERY, DISABLE);
           status = BUTTON_TIMEOUT;
       }
-      else if (mode == int_mode("shell")) {
-          led_alert("blue", DISABLE);
-          exec_script(FILE_ADBD, DISABLE);
-          status = BUTTON_PRESSED;
-      }
-      else if (mode == int_mode("normal") || mode == int_mode("normal-adb")) {
-          led_alert("blue", DISABLE);
-          stk_boot(DISABLE);
-          status = BUTTON_TIMEOUT;
-      }
-
     }
 
     if (status == BUTTON_PRESSED ) {
@@ -450,7 +409,6 @@ static int run_bootmenu(void) {
   return EXIT_SUCCESS;
 }
 
-
 /**
  * main()
  *
@@ -462,9 +420,7 @@ int main(int argc, char **argv) {
   int result;
 
   if (argc == 2 && 0 == strcmp(argv[1], "postbootmenu")) {
-
     /* init.rc call: "exec bootmenu postbootmenu" */
-
     exec_script(FILE_OVERCLOCK, DISABLE);
     result = exec_script(FILE_POST_MENU, DISABLE);
     bypass_sign("no");
@@ -472,27 +428,16 @@ int main(int argc, char **argv) {
     return result;
   }
   else if (NULL != strstr(argv[0], "bootmenu")) {
-
     /* Direct UI, without key test */
-
-#ifndef UNLOCKED_DEVICE
     fprintf(stdout, "Run BootMenu..\n");
     exec_script(FILE_PRE_MENU, DISABLE);
     int mode = get_bootmode(0,0);
     result = run_bootmenu_ui(mode);
-#else
-    // unlocked devices can exec bootmenu directly in init.rc
-    result = run_bootmenu();
-    bypass_sign("no");
-#endif
-
     sync();
     return result;
   }
   else if (argc >= 3 && 0 == strcmp(argv[2], "userdata")) {
-
     /* init.rc call: "exec logwrapper mount.sh userdata" */
-
     result = run_bootmenu();
     real_execute(argc, argv);
     bypass_sign("no");
@@ -500,9 +445,7 @@ int main(int argc, char **argv) {
     return result;
   }
   else if (argc >= 3 && 0 == strcmp(argv[2], "pds")) {
-
     /* kept for stock rom compatibility, please use postbootmenu parameter */
-
     real_execute(argc, argv);
     exec_script(FILE_OVERCLOCK, DISABLE);
     result = exec_script(FILE_POST_MENU, DISABLE);
