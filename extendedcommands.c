@@ -34,12 +34,13 @@
 #include "battery/batt_cpcap.h"
 #endif
 
-#define MODES_COUNT 4
+#define MODES_COUNT 5
 const char* modes[] = {
   "bootmenu",
   "2nd-boot",
   "2nd-boot-uart",
   "2nd-system",
+  "recovery",
 };
 
 // user friendly menu labels
@@ -47,9 +48,6 @@ const char* modes[] = {
 #define LABEL_2NDBOOT_UART    "2nd-boot-uart"
 #define LABEL_2NDSYSTEM  "2nd-system"
 
-#define LABEL_TOGGLE_ADB "ADB:"
-
-static bool boot_with_adb = false;
 static int adbd_ready = 0;
 
 /**
@@ -65,6 +63,47 @@ int int_mode(char * mode) {
   }
   return 0;
 }
+
+/**
+ * snd_boot()
+ */
+int boot_mode(int ui, const char mode[]) {
+  int status;
+  int i;
+
+  bypass_sign("yes");
+
+  if (ui)
+    ui_print("Start %s boot....\n", mode);
+  else
+    LOGI("Start %s boot....\n", mode);
+
+  ui_stop_redraw();
+      status = exec_script(mode, ui);
+  ui_resume_redraw();
+
+  if (status) {
+    bypass_sign("no");
+    return -1;
+  }
+
+  if (ui)
+   ui_print("Wait 2 seconds....\n");
+  else
+    LOGI("Wait 2 seconds....\n");
+
+  for(i = 2; i > 0; --i) {
+    if (ui)
+      ui_print("%d.\n", i);
+    else
+      LOGI("%d..\n", i);
+    usleep(1000000);
+  }
+
+  bypass_sign("no");
+  return 0;
+}
+
 
 /**
  * str_mode()
@@ -88,6 +127,7 @@ int show_menu_boot(void) {
   #define BOOT_2NDSYSTEM  3
 
   int status, res = 0;
+
   const char* headers[] = {
         " # Boot -->",
         "",
@@ -141,14 +181,12 @@ int show_menu_boot(void) {
 
     //Direct boot modes
     else if (ret.result == BOOT_2NDBOOT) {
-        if (boot_with_adb && usb_connected() && !adb_started())
-            exec_script(FILE_ADBD, ENABLE);
-        status = snd_boot(ENABLE);
+        status = boot_mode(ENABLE, FILE_2NDBOOT);
         res = (status == 0);
         goto exit_loop;
     }
     else if (ret.result == BOOT_2NDBOOT_UART) {
-        status = snd_boot_uart(ENABLE);
+        status = boot_mode(ENABLE, FILE_2NDBOOT_UART);
         res = (status == 0);
         goto exit_loop;
     }
@@ -181,7 +219,7 @@ exit_loop:
 int show_config_bootmode(void) {
 
   //last mode enabled for default modes
-  #define LAST_MODE 3
+  #define LAST_MODE 4
 
   int res = 0;
   const char* headers[3] = {
@@ -501,7 +539,6 @@ int show_menu_recovery(void) {
 
     case RECOVERY_STOCK:
       ui_print("Rebooting to Stock Recovery..\n");
-
       sync();
       __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, "recovery");
 
@@ -511,132 +548,6 @@ int show_menu_recovery(void) {
 
   free_menu_headers(title_headers);
   return res;
-}
-
-/**
- * snd_boot()
- *
- * For 2nd-boot (boot custom kernel)
- */
-int snd_boot(int ui) {
-  int status;
-  int i;
-
-  bypass_sign("yes");
-
-  if (ui)
-    ui_print("Start " LABEL_2NDBOOT " boot....\n");
-  else
-    LOGI("Start " LABEL_2NDBOOT " boot....\n");
-
-  ui_stop_redraw();
-      status = exec_script(FILE_2NDBOOT, ui);
-  ui_resume_redraw();
-
-  if (status) {
-    bypass_sign("no");
-    return -1;
-  }
-
-  if (ui)
-    ui_print("Wait 2 seconds....\n");
-  else
-    LOGI("Wait 2 seconds....\n");
-
-  for(i = 2; i > 0; --i) {
-    if (ui)
-      ui_print("%d.\n", i);
-    else
-      LOGI("%d..\n", i);
-    usleep(1000000);
-  }
-
-  bypass_sign("no");
-  return 0;
-}
-
-/**
- * snd_boot()
- *
- * For 2nd-boot (boot custom kernel with uart support)
- */
-int snd_boot_uart(int ui) {
-  int status;
-  int i;
-
-  bypass_sign("yes");
-
-  if (ui)
-    ui_print("Start " LABEL_2NDBOOT_UART " boot....\n");
-  else
-    LOGI("Start " LABEL_2NDBOOT_UART " boot....\n");
-
-  ui_stop_redraw();
-      status = exec_script(FILE_2NDBOOT_UART, ui);
-  ui_resume_redraw();
-
-  if (status) {
-    bypass_sign("no");
-    return -1;
-  }
-
-  if (ui)
-    ui_print("Wait 2 seconds....\n");
-  else
-    LOGI("Wait 2 seconds....\n");
-
-  for(i = 2; i > 0; --i) {
-    if (ui)
-      ui_print("%d.\n", i);
-    else
-      LOGI("%d..\n", i);
-    usleep(1000000);
-  }
-
-  bypass_sign("no");
-  return 0;
-}
-
-/**
- * snd_system()
- *
- * Dual Boot
- */
-int snd_system(int ui) {
-  int status;
-  int i;
-
-  bypass_sign("yes");
-
-  if (ui)
-    ui_print("Start " LABEL_2NDSYSTEM " boot....\n");
-  else
-    LOGI("Start " LABEL_2NDSYSTEM " boot....\n");
-
-  ui_stop_redraw();
-      status = exec_script(FILE_2NDSYSTEM, ui);
-  ui_resume_redraw();
-
-  if (status) {
-    bypass_sign("no");
-    return -1;
-  }
-
-  if (ui)
-    ui_print("Wait 2 seconds....\n");
-  else
-    LOGI("Wait 2 seconds....\n");
-
-  for(i = 2; i > 0; --i) {
-    if (ui)
-      ui_print("%d.\n", i);
-    else
-      LOGI("%d..\n", i);
-    usleep(1000000);
-  }
-
-  bypass_sign("no");
-  return 0;
 }
 
 // --------------------------------------------------------

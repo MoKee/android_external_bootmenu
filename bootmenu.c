@@ -366,14 +366,14 @@ static int run_bootmenu(void) {
       else if (mode == int_mode("2nd-boot")) {
           led_alert("blue", DISABLE);
           led_alert("green", ENABLE);
-          snd_boot(DISABLE);
+          boot_mode(DISABLE, FILE_2NDBOOT);
           led_alert("green", DISABLE);
           status = BUTTON_TIMEOUT;
       }
       else if (mode == int_mode("2nd-boot-uart")) {
           led_alert("blue", DISABLE);
           led_alert("red", ENABLE);
-          snd_boot_uart(DISABLE);
+          boot_mode(DISABLE, FILE_2NDBOOT_UART);
           led_alert("red", DISABLE);
           status = BUTTON_TIMEOUT;
       }
@@ -381,7 +381,7 @@ static int run_bootmenu(void) {
           led_alert("blue", DISABLE);
           led_alert("red", ENABLE);
           led_alert("green", ENABLE);
-          snd_system(DISABLE);
+          boot_mode(DISABLE, FILE_2NDSYSTEM);
           led_alert("red", DISABLE);
           led_alert("green", DISABLE);
           status = BUTTON_TIMEOUT;

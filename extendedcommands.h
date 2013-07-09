@@ -65,7 +65,7 @@ int usb_connected(void);
 int adb_started(void);
 int battery_level(void);
 
-int snd_boot(int ui);
+int snd_boot_mode(int ui, const char mode[]);
 int snd_boot_uart(int ui);
 int snd_system(int ui);
 
