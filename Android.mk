@@ -16,7 +16,7 @@ bootmenu_sources := \
     default_bootmenu_ui.c \
     ui.c \
 
-BOOTMENU_VERSION:=2.2-beta
+BOOTMENU_VERSION:=2.2-MoKee
 
 # Variables available in BoardConfig.mk related to mount devices
 
