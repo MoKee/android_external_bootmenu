@@ -73,7 +73,7 @@ LOCAL_CFLAGS += \
     -DMAX_ROWS=44 -DMAX_COLS=96 ${EXTRA_CFLAGS}
 
 LOCAL_STATIC_LIBRARIES := libminui_bm libpixelflinger_static libpng libz  libreboot
-LOCAL_STATIC_LIBRARIES += libstdc++ libc libcutils
+LOCAL_STATIC_LIBRARIES += libstdc++ libc libcutils liblog
 
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 
